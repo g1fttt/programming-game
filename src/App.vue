@@ -1,11 +1,22 @@
-<script setup></script>
+<script setup>
+import Editor from "./components/Editor.vue"
+import Game from "./components/Game.vue"
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div id="app-container">
+    <Editor />
+    <Game />
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#app-container {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  width: 100vw;
+  height: 100vh;
+}
+</style>
