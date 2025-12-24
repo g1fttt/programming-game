@@ -3,41 +3,76 @@ import { basicSetup } from "codemirror"
 import { EditorState } from "@codemirror/state"
 import { EditorView, keymap } from "@codemirror/view"
 import { defaultKeymap } from "@codemirror/commands"
-import { javascript } from "@codemirror/lang-javascript"
+import { javascript, esLint } from "@codemirror/lang-javascript"
+import { linter, lintGutter } from "@codemirror/lint"
+
 import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 
+import * as esLintBrowserify from "eslint-linter-browserify"
+
+import { store } from "@/game-state"
 import { onMounted, ref } from "vue"
 
 let editorView = undefined
+let codeWorker = undefined
 
 const editAreaRef = ref(null)
 
 onMounted(() => {
+  const esLintConfig = {
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 2024,
+        sourceType: "module",
+      },
+    },
+  }
+
   const startState = EditorState.create({
-    doc: "Hello, World!",
-    extensions: [basicSetup, keymap.of(defaultKeymap), javascript(), solarizedDark],
+    doc: 'console.log("Hello, World!")',
+    extensions: [
+      basicSetup,
+      keymap.of(defaultKeymap),
+      javascript(),
+      solarizedDark,
+      lintGutter(),
+      linter(esLint(new esLintBrowserify.Linter(), esLintConfig)),
+    ],
   })
 
   editorView = new EditorView({
     state: startState,
     parent: editAreaRef.value,
   })
+
+  codeWorker = new Worker("./src/game-worker.js", { type: "module" })
+  codeWorker.onmessage = (ev) => {
+    const newState = ev.data
+    store._deepMergeState(newState)
+  }
 })
 
 function onRunButtonClick() {
-  if (!editorView) {
+  // Unnecessary, yet good practice anyway
+  if (!editorView || !codeWorker) {
     return
   }
 
-  // TODO: Execute code using Worker and Function
-  console.log(editorView.state.doc.toString())
+  const rawState = JSON.parse(JSON.stringify(store.state))
+
+  codeWorker.postMessage({
+    code: editorView.state.doc.toString(),
+    state: rawState,
+  })
 }
 </script>
 
 <template>
   <div id="editor-container">
+    <div id="button-row">
+      <button @click="onRunButtonClick()" id="run-button">Run</button>
+    </div>
     <div id="edit-area" ref="editAreaRef"></div>
-    <button @click="onRunButtonClick()" id="run-button">Run</button>
   </div>
 </template>
 
@@ -45,38 +80,52 @@ function onRunButtonClick() {
 #editor-container {
   padding: 1rem;
 
-  & > #edit-area {
+  & > #edit-area,
+  #stdout-area {
     overflow: auto;
     contain: inline-size;
-    height: 85vh;
+
     border-style: solid;
     border-radius: 0.5rem;
     border-color: #00252f;
+  }
+
+  & > #edit-area {
+    height: 85vh;
+    margin-bottom: 0.5rem;
 
     &:deep(.cm-editor) {
       height: 100%;
     }
   }
+}
 
-  & > #run-button {
-    margin-top: 1rem;
+#button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-bottom: 1rem;
+
+  & > * {
     width: 5rem;
     height: 2rem;
-    float: right;
+    color: var(--sol-base03);
     border-style: none;
     border-radius: 4px;
-    color: var(--sol-base03);
-    background-color: var(--sol-green);
     filter: brightness(80%);
-    transition: 350ms;
+    transition: 150ms;
 
     &:hover {
       filter: brightness(100%);
     }
 
     &:active {
-      background-color: var(--sol-base00);
+      background-color: var(--sol-base00) !important;
     }
+  }
+
+  & > #run-button {
+    background-color: var(--sol-green);
   }
 }
 </style>

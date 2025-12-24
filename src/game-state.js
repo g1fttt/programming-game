@@ -10,14 +10,20 @@ const state = reactive({
   },
 })
 
-const actions = {}
-
-const getters = {}
-
-const store = {
-  state: readonly(state),
-  ...actions,
-  ...getters,
+function deepMergeState(newState) {
+  const merge = (target, source) => {
+    for (const key in source) {
+      if (source[key] instanceof Object && key in target) {
+        merge(target[key], source[key])
+      } else {
+        target[key] = source[key]
+      }
+    }
+  }
+  merge(state, newState)
 }
 
-export { store }
+export const store = {
+  state: readonly(state),
+  _deepMergeState: deepMergeState,
+}
