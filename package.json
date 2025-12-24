@@ -15,6 +15,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@babel/standalone": "^7.28.5",
     "@codemirror/commands": "^6.10.0",
     "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/language": "^6.11.3",
@@ -24,10 +25,12 @@
     "@fsegurai/codemirror-theme-solarized-dark": "^6.2.3",
     "codemirror": "^6.0.2",
     "eslint-linter-browserify": "^9.39.2",
+    "js-interpreter": "^6.0.1",
     "vue": "^3.5.25"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/babel__standalone": "^7.1.9",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vitejs/plugin-vue-jsx": "^5.1.2",
     "@vitest/eslint-plugin": "^1.5.0",
