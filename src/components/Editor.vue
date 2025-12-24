@@ -2,7 +2,7 @@
 import { basicSetup } from "codemirror"
 import { EditorState } from "@codemirror/state"
 import { EditorView, keymap } from "@codemirror/view"
-import { defaultKeymap } from "@codemirror/commands"
+import { indentWithTab } from "@codemirror/commands"
 import { javascript, esLint } from "@codemirror/lang-javascript"
 import { linter, lintGutter } from "@codemirror/lint"
 
@@ -32,9 +32,10 @@ onMounted(() => {
     doc: 'console.log("Hello, World!")',
     extensions: [
       basicSetup,
-      keymap.of(defaultKeymap),
+      keymap.of([indentWithTab]),
       javascript(),
       solarizedDark,
+
       lintGutter(),
       linter(esLint(new esLintBrowserify.Linter(), esLintConfig)),
     ],
