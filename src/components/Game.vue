@@ -1,5 +1,5 @@
 <script setup>
-import { store } from "@/game-state.js"
+import { store } from "@/game/state.js"
 
 import { computed } from "vue"
 
@@ -14,29 +14,34 @@ const worldContainerStyle = computed(() => ({
   alignContent: "center",
 }))
 
-const worldCellStyle = computed(() => ({
-  aspectRatio: "1 / 1",
-}))
+const cells = computed(() => {
+  const world = store.state.world
+  const player = store.state.player
 
-function getCellBackgroundColor(x, y) {
-  if (x === store.state.player.pos.x && y === store.state.player.pos.y) {
-    return "blue"
+  let grid = []
+
+  for (let y = 0; y < world.height; ++y) {
+    for (let x = 0; x < world.width; ++x) {
+      grid.push({
+        id: `${x}-${y}`,
+        isPlayer: player.pos.x === x && player.pos.y === y,
+      })
+    }
   }
-  return "green"
-}
+
+  return grid
+})
 </script>
 
 <template>
   <section id="game-container">
     <div :style="[worldContainerStyle]">
-      <!-- NOTE: "display: grid" does not affect <template>, so inner <div> is the true child -->
-      <template v-for="(_, y) in store.state.world.height" :key="`row-${y}`">
-        <div
-          v-for="(_, x) in store.state.world.width"
-          :key="`column-${x}`"
-          :style="[worldCellStyle, { backgroundColor: getCellBackgroundColor(x, y) }]"
-        ></div>
-      </template>
+      <div
+        v-for="cell in cells"
+        :key="cell.id"
+        class="world-cell"
+        :class="{ 'is-player': cell.isPlayer }"
+      ></div>
     </div>
   </section>
 </template>
@@ -50,5 +55,9 @@ function getCellBackgroundColor(x, y) {
 .world-cell {
   aspect-ratio: 1 / 1;
   background-color: green;
+}
+
+.is-player {
+  background-color: blue;
 }
 </style>

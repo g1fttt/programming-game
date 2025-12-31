@@ -10,7 +10,7 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 
 import * as esLintBrowserify from "eslint-linter-browserify"
 
-import { store } from "@/game-state"
+import { store } from "@/game/state.js"
 import { onMounted, ref } from "vue"
 
 let editorView = undefined
@@ -46,11 +46,10 @@ onMounted(() => {
     parent: editAreaRef.value,
   })
 
-  codeWorker = new Worker("./src/game-worker.js", { type: "module" })
-  codeWorker.onmessage = (ev) => {
-    const newState = ev.data
-    store._deepMergeState(newState)
-  }
+  const codeWorkerUrl = new URL("@/game/worker.js", import.meta.url)
+
+  codeWorker = new Worker(codeWorkerUrl, { type: "module" })
+  codeWorker.onmessage = (ev) => store._deepMergeState(ev.data)
 })
 
 function onRunButtonClick() {

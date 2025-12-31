@@ -5,8 +5,8 @@ const state = reactive({
     pos: { x: 0, y: 0 },
   },
   world: {
-    width: 5,
-    height: 5,
+    width: 3,
+    height: 3,
   },
 })
 

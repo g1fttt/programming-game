@@ -1,6 +1,6 @@
 <script setup>
-import Editor from "./components/Editor.vue"
-import Game from "./components/Game.vue"
+import Editor from "@/components/Editor.vue"
+import Game from "@/components/Game.vue"
 </script>
 
 <template>
