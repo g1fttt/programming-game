@@ -57,6 +57,7 @@ function onCodeStart(code, gameState) {
     })
 
     function run() {
+      // TODO: Crop growth process
       if (interpreter.step() && !shouldStop) {
         self.postMessage(currentGameState(interpreter))
 

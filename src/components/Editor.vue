@@ -30,6 +30,7 @@ onMounted(() => {
     },
   }
 
+  // TODO: Autocompletion for game api
   const editorStartState = EditorState.create({
     doc: 'console.log("Hello, World!")',
     extensions: [
@@ -82,6 +83,7 @@ function onStopButtonClick() {
 <template>
   <div id="editor-container">
     <div id="button-row">
+      <!-- TODO: New font for buttons: something more bold? -->
       <button @click="onStopButtonClick()" id="stop-button">Stop</button>
       <button @click="onRunButtonClick()" id="run-button">Run</button>
     </div>
