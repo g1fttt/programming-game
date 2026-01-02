@@ -11,6 +11,8 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 import * as esLintBrowserify from "eslint-linter-browserify"
 
 import { store } from "@/game/state.js"
+import { messageType } from "@/game/worker.js"
+
 import { onMounted, ref } from "vue"
 
 let editorView = undefined
@@ -28,7 +30,7 @@ onMounted(() => {
     },
   }
 
-  const startState = EditorState.create({
+  const editorStartState = EditorState.create({
     doc: 'console.log("Hello, World!")',
     extensions: [
       basicSetup,
@@ -42,14 +44,14 @@ onMounted(() => {
   })
 
   editorView = new EditorView({
-    state: startState,
+    state: editorStartState,
     parent: editAreaRef.value,
   })
 
   const codeWorkerUrl = new URL("@/game/worker.js", import.meta.url)
 
   codeWorker = new Worker(codeWorkerUrl, { type: "module" })
-  codeWorker.onmessage = (ev) => store._deepMergeState(ev.data)
+  codeWorker.onmessage = (ev) => store.deepMergeState(ev.data)
 })
 
 function onRunButtonClick() {
@@ -58,18 +60,29 @@ function onRunButtonClick() {
     return
   }
 
-  const rawState = JSON.parse(JSON.stringify(store.state))
+  // Send a copy of state to the worker in order to prevent unexpected and random state change
+  const stateCopy = JSON.parse(JSON.stringify(store.state))
 
   codeWorker.postMessage({
+    type: messageType.START,
     code: editorView.state.doc.toString(),
-    state: rawState,
+    gameState: stateCopy,
   })
+}
+
+function onStopButtonClick() {
+  if (!codeWorker) {
+    return
+  }
+
+  codeWorker.postMessage({ type: messageType.STOP })
 }
 </script>
 
 <template>
   <div id="editor-container">
     <div id="button-row">
+      <button @click="onStopButtonClick()" id="stop-button">Stop</button>
       <button @click="onRunButtonClick()" id="run-button">Run</button>
     </div>
     <div id="edit-area" ref="editAreaRef"></div>
@@ -80,17 +93,12 @@ function onRunButtonClick() {
 #editor-container {
   padding: 1rem;
 
-  & > #edit-area,
-  #stdout-area {
+  & > #edit-area {
     overflow: auto;
     contain: inline-size;
-
     border-style: solid;
     border-radius: 0.5rem;
     border-color: #00252f;
-  }
-
-  & > #edit-area {
     height: 85vh;
     margin-bottom: 0.5rem;
 
@@ -126,6 +134,10 @@ function onRunButtonClick() {
 
   & > #run-button {
     background-color: var(--sol-green);
+  }
+
+  & > #stop-button {
+    background-color: var(--sol-orange);
   }
 }
 </style>

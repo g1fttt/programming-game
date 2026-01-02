@@ -75,5 +75,5 @@ function deepMergeState(newState) {
 
 export const store = {
   state: readonly(state),
-  _deepMergeState: deepMergeState,
+  deepMergeState: deepMergeState,
 }

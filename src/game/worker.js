@@ -45,27 +45,47 @@ function initProperties(interpreter, globalObject, state, api) {
   }
 }
 
-self.onmessage = function (ev) {
-  const { code, state } = ev.data
+let shouldStop = false
 
-  const api = genApi(state)
+function onCodeStart(code, gameState) {
+  const api = genApi(gameState)
 
   try {
     const transformedCode = Babel.transform(code, { presets: ["env"] }).code
     const interpreter = new Interpreter(transformedCode, (interpreter, globalObject) => {
-      initProperties(interpreter, globalObject, state, api)
+      initProperties(interpreter, globalObject, gameState, api)
     })
 
     function run() {
-      if (interpreter.step()) {
+      if (interpreter.step() && !shouldStop) {
         self.postMessage(currentGameState(interpreter))
 
         setTimeout(run, 0)
+      } else {
+        shouldStop = false
       }
     }
 
     run()
   } catch (err) {
     console.error(err)
+  }
+}
+
+export const messageType = Object.freeze({
+  START: "start",
+  STOP: "stop",
+})
+
+self.onmessage = function (ev) {
+  const { type, code, gameState } = ev.data
+
+  switch (type) {
+    case messageType.START:
+      onCodeStart(code, gameState)
+      break
+    case messageType.STOP:
+      shouldStop = true
+      break
   }
 }
