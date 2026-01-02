@@ -53,7 +53,7 @@ onMounted(() => {
 })
 
 function onRunButtonClick() {
-  // Unnecessary, yet good practice anyway
+  // Unnecessary, yet a good practice anyway
   if (!editorView || !codeWorker) {
     return
   }
