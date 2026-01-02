@@ -17,9 +17,11 @@ function initProperties(interpreter, globalObject, state, api) {
 
   const createCommand = (fn) => {
     return interpreter.createNativeFunction((...args) => {
-      fn(...args)
+      const result = fn(...args)
 
       updateGameState(interpreter, globalObject, state)
+
+      return interpreter.nativeToPseudo(result)
     })
   }
 
@@ -58,8 +60,7 @@ self.onmessage = function (ev) {
       if (interpreter.step()) {
         self.postMessage(currentGameState(interpreter))
 
-        // TODO: Make timeout configurable
-        setTimeout(run, 25)
+        setTimeout(run, 0)
       }
     }
 
