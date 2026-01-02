@@ -1,16 +1,9 @@
 <script setup>
 import { store } from "@/game/state.js"
 
-import { computed } from "vue"
+import Inventory from "@/components/Inventory.vue"
 
-const worldContainerStyle = computed(() => ({
-  display: "grid",
-  width: "100%",
-  gap: "5px",
-  gridTemplateColumns: `repeat(${store.state.world.width}, 50px)`,
-  justifyContent: "center",
-  alignContent: "center",
-}))
+import { computed } from "vue"
 
 const worldGrid = computed(() => {
   const world = store.state.world
@@ -56,11 +49,16 @@ function cellTextures(cropType, growthStage) {
 
 <template>
   <section id="game-container">
-    <div :style="[worldContainerStyle]">
+    <Inventory />
+
+    <div
+      id="world-grid"
+      :style="{ gridTemplateColumns: `repeat(${store.state.world.width}, 50px)` }"
+    >
       <div
         v-for="cell in worldGrid"
         :key="cell.id"
-        class="cell"
+        class="world-cell"
         :class="{ 'is-player': cell.isPlayer }"
         :style="{ '--textures': cellTextures(cell.cropType, cell.growthStage) }"
       ></div>
@@ -74,16 +72,24 @@ function cellTextures(cropType, growthStage) {
   background-color: black;
 }
 
-.cell {
-  aspect-ratio: 1 / 1;
-  image-rendering: pixelated;
-  background-image: var(--textures);
-  background-size: cover;
-}
+#world-grid {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  justify-content: center;
+  align-content: center;
 
-.is-player {
-  outline-color: antiquewhite;
-  outline-style: solid;
-  outline-width: 3px;
+  & > .world-cell {
+    aspect-ratio: 1 / 1;
+    image-rendering: pixelated;
+    background-image: var(--textures);
+    background-size: cover;
+  }
+
+  & > .is-player {
+    outline-color: antiquewhite;
+    outline-style: solid;
+    outline-width: 3px;
+  }
 }
 </style>
