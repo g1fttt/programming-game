@@ -1,28 +1,12 @@
 import Interpreter from "js-interpreter"
 import * as Babel from "@babel/standalone"
+
 import { genApi } from "@/game/api.js"
+import { store, MS_PER_TICK } from "@/game/state.js"
 
-function updateGameState(interpreter, globalObject, state) {
-  const pseudoState = interpreter.nativeToPseudo(state)
-  interpreter.setProperty(globalObject, "state", pseudoState)
-}
-
-function currentGameState(interpreter) {
-  const pseudoState = interpreter.getValueFromScope("state")
-  return interpreter.pseudoToNative(pseudoState)
-}
-
-function initProperties(interpreter, globalObject, state, api) {
-  updateGameState(interpreter, globalObject, state)
-
+function initProperties(interpreter, globalObject, api) {
   const createCommand = (fn) => {
-    return interpreter.createNativeFunction((...args) => {
-      const result = fn(...args)
-
-      updateGameState(interpreter, globalObject, state)
-
-      return interpreter.nativeToPseudo(result)
-    })
+    return interpreter.createNativeFunction((...args) => interpreter.nativeToPseudo(fn(...args)))
   }
 
   for (const [key, value] of Object.entries(api)) {
@@ -37,7 +21,7 @@ function initProperties(interpreter, globalObject, state, api) {
       case "object":
       case "symbol":
       case "bigint":
-        let pseudoValue = interpreter.nativeToPseudo(value)
+        const pseudoValue = interpreter.nativeToPseudo(value)
         interpreter.setProperty(globalObject, key, pseudoValue)
 
         break
@@ -47,30 +31,51 @@ function initProperties(interpreter, globalObject, state, api) {
 
 let shouldStop = false
 
+async function runCode(interpreter, gameState) {
+  let lastYieldTime = performance.now()
+  let lastFrameTime = lastYieldTime
+  let accumulator = 0
+
+  while (interpreter.step() && !shouldStop) {
+    const now = performance.now()
+
+    const deltaTime = now - lastFrameTime
+    lastFrameTime = now
+    accumulator += deltaTime
+
+    while (accumulator >= MS_PER_TICK) {
+      store.tickState(gameState)
+      accumulator -= MS_PER_TICK
+    }
+
+    const timeSinceLastYield = now - lastYieldTime
+
+    const desiredFramesPerSecond = 20
+    const desiredFrameTime = 1000 / desiredFramesPerSecond
+
+    if (timeSinceLastYield > desiredFrameTime) {
+      self.postMessage(gameState)
+
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      lastYieldTime = performance.now()
+      lastFrameTime = lastYieldTime
+    }
+  }
+
+  self.postMessage(gameState)
+  shouldStop = false
+}
+
 function onCodeStart(code, gameState) {
   const api = genApi(gameState)
 
-  try {
-    const transformedCode = Babel.transform(code, { presets: ["env"] }).code
-    const interpreter = new Interpreter(transformedCode, (interpreter, globalObject) => {
-      initProperties(interpreter, globalObject, gameState, api)
-    })
+  const transformedCode = Babel.transform(code, { presets: ["env"] }).code
+  const interpreter = new Interpreter(transformedCode, (interpreter, globalObject) => {
+    initProperties(interpreter, globalObject, api)
+  })
 
-    function run() {
-      // TODO: Crop growth process
-      if (interpreter.step() && !shouldStop) {
-        self.postMessage(currentGameState(interpreter))
-
-        setTimeout(run, 0)
-      } else {
-        shouldStop = false
-      }
-    }
-
-    run()
-  } catch (err) {
-    console.error(err)
-  }
+  runCode(interpreter, gameState)
 }
 
 export const messageType = Object.freeze({

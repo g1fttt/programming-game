@@ -15,11 +15,20 @@ export const growthStage = Object.freeze({
   RIPENING: 3,
 })
 
+export const MS_PER_TICK = 10
+const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(1000)
+
+// NOTE: Very unconsistent due to setTimeout nature: very web-browser dependant
+function msToTicks(timeMs) {
+  return Math.round(timeMs / MS_PER_TICK)
+}
+
 // Classes are forbidden due to js-interpreter: no support
 export function createCell(cropType) {
   return {
     cropType: cropType,
     growthStage: cropType === null ? null : growthStage.SPROUTING,
+    ticksUntilNextGrowthStage: TICKS_UNTIL_NEXT_GROWTH_STAGE,
   }
 }
 
@@ -41,14 +50,12 @@ function createGrid() {
     for (let x = 0; x < WORLD_WIDTH; ++x) {
       row.push(createCell(null))
     }
-
     grid.push(row)
   }
-
   return grid
 }
 
-const state = reactive({
+let state = reactive({
   player: {
     pos: { x: 0, y: 0 },
     inventory: genCropTypeInventoryMap(),
@@ -59,6 +66,21 @@ const state = reactive({
     grid: createGrid(),
   },
 })
+
+function tickState(gameState) {
+  const clamp = (x, min, max) => Math.min(Math.max(x, min), max)
+
+  for (let y = 0; y < gameState.world.height; ++y) {
+    for (let x = 0; x < gameState.world.width; ++x) {
+      let cell = gameState.world.grid[y][x]
+
+      if (cell.growthStage < growthStage.RIPENING && --cell.ticksUntilNextGrowthStage <= 0) {
+        cell.ticksUntilNextGrowthStage = TICKS_UNTIL_NEXT_GROWTH_STAGE
+        cell.growthStage = clamp(cell.growthStage + 1, growthStage.SPROUTING, growthStage.RIPENING)
+      }
+    }
+  }
+}
 
 function deepMergeState(newState) {
   const merge = (target, source) => {
@@ -75,5 +97,6 @@ function deepMergeState(newState) {
 
 export const store = {
   state: readonly(state),
+  tickState: tickState,
   deepMergeState: deepMergeState,
 }
