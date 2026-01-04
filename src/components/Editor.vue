@@ -13,7 +13,7 @@ import * as esLintBrowserify from "eslint-linter-browserify"
 import { store } from "@/game/state.js"
 import { messageType } from "@/game/worker.js"
 
-import { onMounted, ref } from "vue"
+import { onMounted, ref, toRaw } from "vue"
 
 let editorView = undefined
 let codeWorker = undefined
@@ -38,7 +38,6 @@ onMounted(() => {
       keymap.of([indentWithTab]),
       javascript(),
       solarizedDark,
-
       lintGutter(),
       linter(esLint(new esLintBrowserify.Linter(), esLintConfig)),
     ],
@@ -61,13 +60,12 @@ function onRunButtonClick() {
     return
   }
 
-  // Send a copy of state to the worker in order to prevent unexpected and random state change
-  const stateCopy = JSON.parse(JSON.stringify(store.state))
+  const rawState = toRaw(store.state)
 
   codeWorker.postMessage({
     type: messageType.START,
     code: editorView.state.doc.toString(),
-    gameState: stateCopy,
+    gameState: rawState,
   })
 }
 
