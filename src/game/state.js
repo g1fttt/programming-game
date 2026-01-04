@@ -16,7 +16,7 @@ export const growthStage = Object.freeze({
 })
 
 export const MS_PER_TICK = 10
-const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(1000)
+const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(3000)
 
 // NOTE: Very unconsistent due to setTimeout nature: very web-browser dependant
 function msToTicks(timeMs) {

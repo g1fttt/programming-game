@@ -11,12 +11,14 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 import * as esLintBrowserify from "eslint-linter-browserify"
 
 import { store } from "@/game/state.js"
-import { messageType } from "@/game/worker.js"
+import { codeStatus, messageType } from "@/game/worker.js"
 
 import { onMounted, ref, toRaw } from "vue"
 
 let editorView = undefined
 let codeWorker = undefined
+
+let codeIsRunning = ref(false)
 
 const editAreaRef = ref(null)
 
@@ -51,7 +53,16 @@ onMounted(() => {
   const codeWorkerUrl = new URL("@/game/worker.js", import.meta.url)
 
   codeWorker = new Worker(codeWorkerUrl, { type: "module" })
-  codeWorker.onmessage = (ev) => store.deepMergeState(ev.data)
+  codeWorker.onmessage = (ev) => {
+    switch (ev.data?.type) {
+      case messageType.CODE_STATUS:
+        codeIsRunning.value = ev.data.status === codeStatus.RUNNING
+        break
+      default:
+        store.deepMergeState(ev.data)
+        break
+    }
+  }
 })
 
 function onRunButtonClick() {
@@ -63,10 +74,12 @@ function onRunButtonClick() {
   const rawState = toRaw(store.state)
 
   codeWorker.postMessage({
-    type: messageType.START,
+    type: messageType.CODE_START,
     code: editorView.state.doc.toString(),
     gameState: rawState,
   })
+
+  codeWorker.postMessage({ type: messageType.CODE_STATUS })
 }
 
 function onStopButtonClick() {
@@ -74,7 +87,9 @@ function onStopButtonClick() {
     return
   }
 
-  codeWorker.postMessage({ type: messageType.STOP })
+  codeWorker.postMessage({ type: messageType.CODE_STOP })
+
+  codeIsRunning.value = false
 }
 </script>
 
@@ -82,8 +97,8 @@ function onStopButtonClick() {
   <div id="editor-container">
     <div id="button-row">
       <!-- TODO: New font for buttons: something more bold? -->
-      <button @click="onStopButtonClick()" id="stop-button">Stop</button>
-      <button @click="onRunButtonClick()" id="run-button">Run</button>
+      <button v-if="codeIsRunning" @click="onStopButtonClick()" id="stop-button">Stop</button>
+      <button v-else-if="!codeIsRunning" @click="onRunButtonClick()" id="run-button">Run</button>
     </div>
     <div id="edit-area" ref="editAreaRef"></div>
   </div>

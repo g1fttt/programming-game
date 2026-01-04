@@ -29,14 +29,14 @@ function initProperties(interpreter, globalObject, api) {
   }
 }
 
-let shouldStop = false
+let status = null
 
 async function runCode(interpreter, gameState) {
   let lastYieldTime = performance.now()
   let lastFrameTime = lastYieldTime
   let accumulator = 0
 
-  while (interpreter.step() && !shouldStop) {
+  while (interpreter.step() && status !== codeStatus.SHOULD_STOP) {
     const now = performance.now()
 
     const deltaTime = now - lastFrameTime
@@ -64,14 +64,17 @@ async function runCode(interpreter, gameState) {
   }
 
   self.postMessage(gameState)
-  shouldStop = false
+  status = null
 }
 
 function onCodeStart(code, gameState) {
   const api = genApi(gameState)
 
-  const transformedCode = Babel.transform(code, { presets: ["env"] }).code
-  const interpreter = new Interpreter(transformedCode, (interpreter, globalObject) => {
+  const transformed = Babel.transform(code, {
+    presets: ["env"],
+    sourceType: "script",
+  })
+  const interpreter = new Interpreter(transformed.code, (interpreter, globalObject) => {
     initProperties(interpreter, globalObject, api)
   })
 
@@ -79,19 +82,31 @@ function onCodeStart(code, gameState) {
 }
 
 export const messageType = Object.freeze({
-  START: "start",
-  STOP: "stop",
+  CODE_START: "code-start",
+  CODE_STOP: "code-stop",
+  CODE_STATUS: "code-status",
+})
+
+export const codeStatus = Object.freeze({
+  SHOULD_STOP: "should-stop",
+  RUNNING: "running",
 })
 
 self.onmessage = function (ev) {
   const { type, code, gameState } = ev.data
 
   switch (type) {
-    case messageType.START:
+    case messageType.CODE_START:
+      status = codeStatus.RUNNING
       onCodeStart(code, gameState)
       break
-    case messageType.STOP:
-      shouldStop = true
+    case messageType.CODE_STOP:
+      status = codeStatus.SHOULD_STOP
       break
+    case messageType.CODE_STATUS:
+      self.postMessage({
+        type: messageType.CODE_STATUS,
+        status: status,
+      })
   }
 }

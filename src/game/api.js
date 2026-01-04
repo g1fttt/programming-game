@@ -93,6 +93,8 @@ export function genApi(gameState) {
   return {
     ...cropType,
     ...direction,
+    WORLD_WIDTH: gameState.world.width,
+    WORLD_HEIGHT: gameState.world.height,
     move: genMove(gameState),
     currentCell: genCurrentCell(gameState),
     sow: genSow(gameState),
