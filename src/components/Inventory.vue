@@ -2,16 +2,14 @@
 import { store, cropType } from "@/game/state.js"
 
 function inventoryIconTexture(cropType) {
-  const url = new URL(`../assets/${cropType}/inventory.png`, import.meta.url)
-
-  return `${url}`
+  return new URL(`../assets/${cropType}/inventory.png`, import.meta.url)
 }
 </script>
 
 <template>
   <div id="inventory">
     <div v-for="(type, _) in cropType" :key="type" class="inventory-cell">
-      <img class="inventory-icon" :src="inventoryIconTexture(type)"></img>
+      <img :src="inventoryIconTexture(type)"></img>
       <p style="color: white">{{ store.state.player.inventory[type] }}</p>
     </div>
   </div>
@@ -30,12 +28,16 @@ function inventoryIconTexture(cropType) {
     flex-direction: row;
     gap: 1px;
 
-    & > .inventory-icon {
+    & > img {
       --icon-size: 32px;
 
       width: var(--icon-size);
       height: var(--icon-size);
       image-rendering: pixelated;
+    }
+
+    & > p {
+      font-family: "Tiny5", sans-serif;
     }
   }
 }
