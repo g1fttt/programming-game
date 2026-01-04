@@ -38,16 +38,16 @@ function genCropTypeInventoryMap() {
   return Object.fromEntries(entries)
 }
 
-const WORLD_WIDTH = 3
-const WORLD_HEIGHT = 3
+const START_WORLD_WIDTH = 3
+const START_WORLD_HEIGHT = 3
 
-function createGrid() {
+function createGrid(width, height) {
   let grid = []
 
-  for (let y = 0; y < WORLD_HEIGHT; ++y) {
+  for (let y = 0; y < width; ++y) {
     let row = []
 
-    for (let x = 0; x < WORLD_WIDTH; ++x) {
+    for (let x = 0; x < height; ++x) {
       row.push(createCell(null))
     }
     grid.push(row)
@@ -61,15 +61,17 @@ let state = reactive({
     inventory: genCropTypeInventoryMap(),
   },
   world: {
-    width: WORLD_WIDTH,
-    height: WORLD_HEIGHT,
-    grid: createGrid(),
+    width: START_WORLD_WIDTH,
+    height: START_WORLD_HEIGHT,
+    grid: createGrid(START_WORLD_WIDTH, START_WORLD_HEIGHT),
   },
 })
 
-function tickState(gameState) {
-  const clamp = (x, min, max) => Math.min(Math.max(x, min), max)
+function clamp(x, min, max) {
+  return Math.min(Math.max(x, min), max)
+}
 
+function tickState(gameState) {
   for (let y = 0; y < gameState.world.height; ++y) {
     for (let x = 0; x < gameState.world.width; ++x) {
       let cell = gameState.world.grid[y][x]
@@ -95,8 +97,19 @@ function deepMergeState(newState) {
   merge(state, newState)
 }
 
+function updateGridSizeBy(sizeMod /* 1 or -1 */) {
+  const newWidth = clamp(state.world.width + sizeMod, START_WORLD_WIDTH, 10)
+  const newHeight = clamp(state.world.height + sizeMod, START_WORLD_HEIGHT, 10)
+  const newGrid = createGrid(newWidth, newHeight)
+
+  state.world.width = newWidth
+  state.world.height = newHeight
+  state.world.grid = newGrid
+}
+
 export const store = {
   state: readonly(state),
   tickState: tickState,
   deepMergeState: deepMergeState,
+  updateGridSizeBy: updateGridSizeBy,
 }

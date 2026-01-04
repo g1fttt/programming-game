@@ -7,8 +7,8 @@ function inventoryIconTexture(cropType) {
 </script>
 
 <template>
-  <div id="inventory">
-    <div v-for="(type, _) in cropType" :key="type" class="inventory-cell">
+  <div id="inventory-container">
+    <div v-for="(type, _) in cropType" :key="`inventory-cell-${type}`" class="inventory-cell">
       <img :src="inventoryIconTexture(type)"></img>
       <p style="color: white">{{ store.state.player.inventory[type] }}</p>
     </div>
@@ -16,7 +16,7 @@ function inventoryIconTexture(cropType) {
 </template>
 
 <style>
-#inventory {
+#inventory-container {
   display: flex;
   flex-direction: row;
   position: absolute;

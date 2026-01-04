@@ -96,9 +96,12 @@ function onStopButtonClick() {
 <template>
   <div id="editor-container">
     <div id="button-row">
-      <!-- TODO: New font for buttons: something more bold? -->
-      <button v-if="codeIsRunning" @click="onStopButtonClick()" id="stop-button">Stop</button>
-      <button v-else-if="!codeIsRunning" @click="onRunButtonClick()" id="run-button">Run</button>
+      <button v-if="codeIsRunning" @click="onStopButtonClick()" id="stop-button" class="button">
+        Stop
+      </button>
+      <button v-else-if="!codeIsRunning" @click="onRunButtonClick()" id="run-button" class="button">
+        Run
+      </button>
     </div>
     <div id="edit-area" ref="editAreaRef"></div>
   </div>
@@ -128,24 +131,6 @@ function onStopButtonClick() {
   justify-content: flex-end;
   gap: 5px;
   margin-bottom: 1rem;
-
-  & > * {
-    width: 5rem;
-    height: 2rem;
-    color: var(--sol-base03);
-    border-style: none;
-    border-radius: 4px;
-    filter: brightness(80%);
-    transition: 150ms;
-
-    &:hover {
-      filter: brightness(100%);
-    }
-
-    &:active {
-      background-color: var(--sol-base00) !important;
-    }
-  }
 
   & > #run-button {
     background-color: var(--sol-green);
