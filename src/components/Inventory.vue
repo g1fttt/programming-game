@@ -15,7 +15,7 @@ function inventoryIconTexture(cropType) {
   </div>
 </template>
 
-<style>
+<style scoped>
 #inventory-container {
   display: flex;
   flex-direction: row;

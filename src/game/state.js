@@ -19,7 +19,7 @@ export const MS_PER_TICK = 10
 const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(3000)
 
 // NOTE: Very unconsistent due to setTimeout nature: very web-browser dependant
-function msToTicks(timeMs) {
+export function msToTicks(timeMs) {
   return Math.round(timeMs / MS_PER_TICK)
 }
 
@@ -101,6 +101,8 @@ function updateGridSizeBy(sizeMod /* 1 or -1 */) {
   const newWidth = clamp(state.world.width + sizeMod, START_WORLD_WIDTH, 10)
   const newHeight = clamp(state.world.height + sizeMod, START_WORLD_HEIGHT, 10)
   const newGrid = createGrid(newWidth, newHeight)
+
+  state.player.pos = { x: 0, y: 0 }
 
   state.world.width = newWidth
   state.world.height = newHeight

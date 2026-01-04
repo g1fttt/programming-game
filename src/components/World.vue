@@ -57,7 +57,7 @@ function cellTextures(cropType, growthStage) {
   </div>
 </template>
 
-<style>
+<style scoped>
 #world-grid {
   display: grid;
   width: 100%;

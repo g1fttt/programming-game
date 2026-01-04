@@ -9,7 +9,7 @@ import { store } from "@/game/state.js"
   </div>
 </template>
 
-<style>
+<style scoped>
 #ui-container {
   display: flex;
   flex-direction: column;
