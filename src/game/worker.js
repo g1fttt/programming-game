@@ -36,7 +36,7 @@ async function runCode(interpreter, gameState) {
   let lastFrameTime = lastYieldTime
   let accumulator = 0
 
-  while (interpreter.step() && status !== codeStatus.SHOULD_STOP) {
+  mainLoop: while (status !== codeStatus.SHOULD_STOP) {
     const now = performance.now()
 
     const deltaTime = now - lastFrameTime
@@ -45,12 +45,17 @@ async function runCode(interpreter, gameState) {
 
     while (accumulator >= MS_PER_TICK) {
       store.tickState(gameState)
+
+      if (!interpreter.step()) {
+        break mainLoop
+      }
+
       accumulator -= MS_PER_TICK
     }
 
     const timeSinceLastYield = now - lastYieldTime
 
-    const desiredFramesPerSecond = 20
+    const desiredFramesPerSecond = 30
     const desiredFrameTime = 1000 / desiredFramesPerSecond
 
     if (timeSinceLastYield > desiredFrameTime) {
