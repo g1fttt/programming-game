@@ -85,8 +85,6 @@ function onRunButtonClick() {
     code: editorView.state.doc.toString(),
     gameState: rawState,
   })
-
-  codeWorker.postMessage({ type: messageType.CODE_STATUS })
 }
 
 function onStopButtonClick() {

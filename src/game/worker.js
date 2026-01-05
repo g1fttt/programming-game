@@ -32,6 +32,13 @@ function initProperties(interpreter, globalObject, api) {
 let status = null
 
 async function runCode(interpreter, gameState) {
+  const sendCodeStatus = () => {
+    self.postMessage({
+      type: messageType.CODE_STATUS,
+      status: status,
+    })
+  }
+
   let lastYieldTime = performance.now()
   let lastFrameTime = lastYieldTime
   let accumulator = 0
@@ -46,7 +53,9 @@ async function runCode(interpreter, gameState) {
     while (accumulator >= MS_PER_TICK) {
       store.tickState(gameState)
 
-      if (!interpreter.step()) {
+      if (interpreter.step()) {
+        sendCodeStatus()
+      } else {
         break mainLoop
       }
 
@@ -68,8 +77,11 @@ async function runCode(interpreter, gameState) {
     }
   }
 
-  self.postMessage(gameState)
   status = null
+
+  sendCodeStatus()
+
+  self.postMessage(gameState)
 }
 
 function onCodeStart(code, gameState) {
@@ -108,10 +120,5 @@ self.onmessage = function (ev) {
     case messageType.CODE_STOP:
       status = codeStatus.SHOULD_STOP
       break
-    case messageType.CODE_STATUS:
-      self.postMessage({
-        type: messageType.CODE_STATUS,
-        status: status,
-      })
   }
 }
