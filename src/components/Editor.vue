@@ -57,7 +57,7 @@ onMounted(() => {
     window.localStorage.setItem("editorStartDoc", editorView.state.doc.toString())
   })
 
-  const codeWorkerUrl = new URL("@/game/worker.js", import.meta.url)
+  const codeWorkerUrl = new URL("../game/worker.js", import.meta.url)
 
   codeWorker = new Worker(codeWorkerUrl, { type: "module" })
   codeWorker.onmessage = (ev) => {
