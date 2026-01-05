@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "vite build && bun x gh-pages -d dist",
     "preview": "vite preview",
     "test:unit": "vitest",
     "lint": "eslint . --fix --cache",
@@ -38,6 +39,7 @@
     "@vue/test-utils": "^2.4.6",
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "~10.5.1",
+    "gh-pages": "^6.3.0",
     "globals": "^16.5.0",
     "jsdom": "^27.2.0",
     "prettier": "3.7.4",
