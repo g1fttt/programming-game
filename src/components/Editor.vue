@@ -32,9 +32,12 @@ onMounted(() => {
     },
   }
 
+  const editorStartDoc =
+    window.localStorage.getItem("editorStartDoc") ?? 'console.log("Hello, World!")'
+
   // TODO: Autocompletion for game api
   const editorStartState = EditorState.create({
-    doc: 'console.log("Hello, World!")',
+    doc: editorStartDoc,
     extensions: [
       basicSetup,
       keymap.of([indentWithTab]),
@@ -48,6 +51,10 @@ onMounted(() => {
   editorView = new EditorView({
     state: editorStartState,
     parent: editAreaRef.value,
+  })
+
+  window.addEventListener("beforeunload", () => {
+    window.localStorage.setItem("editorStartDoc", editorView.state.doc.toString())
   })
 
   const codeWorkerUrl = new URL("@/game/worker.js", import.meta.url)
@@ -99,9 +106,7 @@ function onStopButtonClick() {
       <button v-if="codeIsRunning" @click="onStopButtonClick()" id="stop-button" class="button">
         Stop
       </button>
-      <button v-else-if="!codeIsRunning" @click="onRunButtonClick()" id="run-button" class="button">
-        Run
-      </button>
+      <button v-else @click="onRunButtonClick()" id="run-button" class="button">Run</button>
     </div>
     <div id="edit-area" ref="editAreaRef"></div>
   </div>
