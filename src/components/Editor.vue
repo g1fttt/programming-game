@@ -11,7 +11,9 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 import * as esLintBrowserify from "eslint-linter-browserify"
 
 import { store } from "@/game/state.js"
+
 import { codeStatus, messageType } from "@/game/worker.js"
+import CodeWorker from "@/game/worker.js?worker"
 
 import { onMounted, ref, toRaw } from "vue"
 
@@ -57,9 +59,7 @@ onMounted(() => {
     window.localStorage.setItem("editorStartDoc", editorView.state.doc.toString())
   })
 
-  const codeWorkerUrl = new URL("../game/worker.js", import.meta.url)
-
-  codeWorker = new Worker(codeWorkerUrl, { type: "module" })
+  codeWorker = new CodeWorker()
   codeWorker.onmessage = (ev) => {
     switch (ev.data?.type) {
       case messageType.CODE_STATUS:
