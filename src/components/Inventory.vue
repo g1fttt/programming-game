@@ -1,8 +1,11 @@
 <script setup>
 import { store, cropType } from "@/game/state.js"
+import { getPublicAsset } from "@/game/utils.js"
 
 function inventoryIconTexture(cropType) {
-  return new URL(`../assets/${cropType}/inventory.png`, import.meta.url)
+  const iconTexturePath = getPublicAsset(`/assets/${cropType}/inventory.png`)
+
+  return new URL(iconTexturePath, import.meta.url)
 }
 </script>
 

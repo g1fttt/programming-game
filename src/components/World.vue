@@ -1,5 +1,6 @@
 <script setup>
 import { store } from "@/game/state.js"
+import { getPublicAsset } from "@/game/utils.js"
 
 import { computed } from "vue"
 
@@ -26,20 +27,17 @@ const worldGrid = computed(() => {
 })
 
 function cellTextures(cropType, growthStage) {
-  const assetsPath = "../assets"
+  const assetsPath = "/assets"
 
   let layers = []
 
   if (cropType !== null) {
-    const cropTextureUrl = new URL(
-      `${assetsPath}/${cropType}/stage-${growthStage}.png`,
-      import.meta.url,
-    )
-    layers.push(`url(${cropTextureUrl})`)
+    const cropTexturePath = getPublicAsset(`${assetsPath}/${cropType}/stage-${growthStage}.png`)
+    layers.push(`url(${new URL(cropTexturePath, import.meta.url)})`)
   }
 
-  const soilTextureUrl = new URL(`${assetsPath}/soil.png`, import.meta.url)
-  layers.push(`url(${soilTextureUrl})`)
+  const soilTexturePath = getPublicAsset(`${assetsPath}/soil.png`)
+  layers.push(`url(${new URL(soilTexturePath, import.meta.url)})`)
 
   return layers.join(", ")
 }
