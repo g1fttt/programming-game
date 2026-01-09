@@ -40,8 +40,9 @@ function genCurrentCell(gameState) {
     const playerPos = gameState.player.pos
 
     const cell = gameState.world.grid[playerPos.y][playerPos.x]
+    const publicCell = { cropType: cell.cropType, growthStage: growthStage }
 
-    return cell.cropType === null ? null : cell
+    return cell.cropType === null ? null : publicCell
   }
 }
 

@@ -1,3 +1,5 @@
+import { msToTicks } from "@/game/utils.js"
+
 import { reactive, readonly } from "vue"
 
 export const cropType = Object.freeze({
@@ -17,11 +19,6 @@ export const growthStage = Object.freeze({
 
 export const MS_PER_TICK = 10
 const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(3000)
-
-// NOTE: Very unconsistent due to setTimeout nature: very web-browser dependant
-export function msToTicks(timeMs) {
-  return Math.round(timeMs / MS_PER_TICK)
-}
 
 // Classes are forbidden due to js-interpreter: no support
 export function createCell(cropType) {
