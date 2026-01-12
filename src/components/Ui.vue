@@ -1,16 +1,20 @@
 <script setup>
+import Inventory from "@/components/Inventory.vue"
+
 import { store } from "@/game/state.js"
 </script>
 
 <template>
-  <div id="ui-container">
+  <Inventory />
+
+  <div id="right-panel-container">
     <button @click="store.updateGridSizeBy(1)" class="button game-button">Increase</button>
     <button @click="store.updateGridSizeBy(-1)" class="button game-button">Decrease</button>
   </div>
 </template>
 
 <style scoped>
-#ui-container {
+#right-panel-container {
   display: flex;
   flex-direction: column;
   position: absolute;
