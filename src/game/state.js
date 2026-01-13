@@ -1,8 +1,8 @@
-import { msToTicks } from "@/game/utils.js"
+import { msToTicks, clamp } from "@/game/utils.js"
 
 import { reactive, readonly } from "vue"
 
-export const cropType = Object.freeze({
+export const CropType = Object.freeze({
   CARROT: "carrot",
   LETTUCE: "lettuce",
   ONION: "onion",
@@ -11,32 +11,82 @@ export const cropType = Object.freeze({
   TURNIP: "turnip",
 })
 
-export const growthStage = Object.freeze({
+export const GrowthStage = Object.freeze({
   SPROUTING: 1,
   SEEDLING: 2,
   RIPENING: 3,
 })
 
 export const MS_PER_TICK = 10
-const TICKS_UNTIL_NEXT_GROWTH_STAGE = msToTicks(3000)
 
-// Classes are forbidden due to js-interpreter: no support
-export function createCell(cropType) {
-  return {
-    cropType: cropType,
-    growthStage: cropType === null ? null : growthStage.SPROUTING,
-    ticksUntilNextGrowthStage: TICKS_UNTIL_NEXT_GROWTH_STAGE,
+class Tickable {
+  constructor(ticksToTick) {
+    this.ticksLeft = ticksToTick
+    this.ticksToTick = ticksToTick
+  }
+
+  static reconstruct(instance, object) {
+    instance.ticksLeft = object.ticksLeft
+    instance.tickToTick = object.ticksToTick
+  }
+
+  tick() {
+    const isDoneTicking = --this.ticksLeft <= 0
+
+    if (isDoneTicking) {
+      this.ticksLeft = this.ticksToTick
+    }
+
+    return isDoneTicking
   }
 }
 
-function genCropTypeInventoryMap() {
-  const entries = Object.entries(cropType).map(([_, value]) => [value, 0])
+export class WorldGridCell extends Tickable {
+  constructor(cropType, growthStage) {
+    super(msToTicks(3000))
+
+    this.cropType = !cropType ? null : cropType
+
+    if (!cropType) {
+      this.growthStage = null
+    } else if (growthStage) {
+      this.growthStage = growthStage
+    } else {
+      this.growthStage = GrowthStage.SPROUTING
+    }
+  }
+
+  static fromObject(object) {
+    let cell = new WorldGridCell(object.cropType, object.growthStage)
+    Tickable.reconstruct(cell, object)
+
+    return cell
+  }
+
+  tick() {
+    const isDoneTicking = super.tick()
+
+    if (isDoneTicking && this.growthStage < GrowthStage.RIPENING) {
+      this.growthStage = clamp(this.growthStage + 1, GrowthStage.SPROUTING, GrowthStage.RIPENING)
+    }
+
+    return isDoneTicking
+  }
+}
+
+export function reconstructState(gameStateObject) {
+  for (let y = 0; y < gameStateObject.world.height; ++y) {
+    for (let x = 0; x < gameStateObject.world.width; ++x) {
+      gameStateObject.world.grid[y][x] = WorldGridCell.fromObject(gameStateObject.world.grid[y][x])
+    }
+  }
+}
+
+function genEmptyCropTypeStorage() {
+  const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
 
   return Object.fromEntries(entries)
 }
-
-const START_WORLD_WIDTH = 3
-const START_WORLD_HEIGHT = 3
 
 function createGrid(width, height) {
   let grid = []
@@ -45,17 +95,24 @@ function createGrid(width, height) {
     let row = []
 
     for (let x = 0; x < height; ++x) {
-      row.push(createCell(null))
+      row.push(new WorldGridCell())
     }
     grid.push(row)
   }
   return grid
 }
 
+const START_WORLD_WIDTH = 3
+const START_WORLD_HEIGHT = 3
+
+const MAX_WORLD_WIDTH = 10
+const MAX_WORLD_HEIGHT = 10
+
 let state = reactive({
   player: {
     pos: { x: 0, y: 0 },
-    inventory: genCropTypeInventoryMap(),
+    inventory: genEmptyCropTypeStorage(),
+    seeds: genEmptyCropTypeStorage(),
   },
   world: {
     width: START_WORLD_WIDTH,
@@ -64,19 +121,11 @@ let state = reactive({
   },
 })
 
-function clamp(x, min, max) {
-  return Math.min(Math.max(x, min), max)
-}
-
 function tickState(gameState) {
   for (let y = 0; y < gameState.world.height; ++y) {
     for (let x = 0; x < gameState.world.width; ++x) {
       let cell = gameState.world.grid[y][x]
-
-      if (cell.growthStage < growthStage.RIPENING && --cell.ticksUntilNextGrowthStage <= 0) {
-        cell.ticksUntilNextGrowthStage = TICKS_UNTIL_NEXT_GROWTH_STAGE
-        cell.growthStage = clamp(cell.growthStage + 1, growthStage.SPROUTING, growthStage.RIPENING)
-      }
+      cell.tick()
     }
   }
 }
@@ -94,9 +143,10 @@ function deepMergeState(newState) {
   merge(state, newState)
 }
 
+// TODO: Enlarge, do not create the new one
 function updateGridSizeBy(sizeMod /* 1 or -1 */) {
-  const newWidth = clamp(state.world.width + sizeMod, START_WORLD_WIDTH, 10)
-  const newHeight = clamp(state.world.height + sizeMod, START_WORLD_HEIGHT, 10)
+  const newWidth = clamp(state.world.width + sizeMod, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
+  const newHeight = clamp(state.world.height + sizeMod, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
   const newGrid = createGrid(newWidth, newHeight)
 
   state.player.pos = { x: 0, y: 0 }

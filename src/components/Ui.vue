@@ -1,11 +1,11 @@
 <script setup>
-import Inventory from "@/components/Inventory.vue"
+import Account from "@/components/Account.vue"
 
 import { store } from "@/game/state.js"
 </script>
 
 <template>
-  <Inventory />
+  <Account />
 
   <div id="right-panel-container">
     <button @click="store.updateGridSizeBy(1)" class="button game-button">Increase</button>

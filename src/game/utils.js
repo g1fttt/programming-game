@@ -10,3 +10,7 @@ export function getPublicAsset(path) {
 export function msToTicks(timeMs) {
   return Math.round(timeMs / MS_PER_TICK)
 }
+
+export function clamp(x, min, max) {
+  return Math.min(Math.max(x, min), max)
+}

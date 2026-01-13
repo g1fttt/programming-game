@@ -1,6 +1,6 @@
-import { cropType, createCell, growthStage } from "@/game/state.js"
+import { CropType, WorldGridCell, GrowthStage } from "@/game/state.js"
 
-const direction = Object.freeze({
+const Direction = Object.freeze({
   EAST: "east",
   WEST: "west",
   SOUTH: "south",
@@ -14,16 +14,16 @@ function genMove(gameState) {
     let newPlayerPos = gameState.player.pos
 
     switch (dir) {
-      case direction.EAST:
+      case Direction.EAST:
         newPlayerPos.x += 1
         break
-      case direction.WEST:
+      case Direction.WEST:
         newPlayerPos.x -= 1
         break
-      case direction.SOUTH:
+      case Direction.SOUTH:
         newPlayerPos.y += 1
         break
-      case direction.NORTH:
+      case Direction.NORTH:
         newPlayerPos.y -= 1
         break
     }
@@ -40,7 +40,7 @@ function genCurrentCell(gameState) {
     const playerPos = gameState.player.pos
 
     const cell = gameState.world.grid[playerPos.y][playerPos.x]
-    const publicCell = { cropType: cell.cropType, growthStage: growthStage }
+    const publicCell = { cropType: cell.cropType, growthStage: cell.growthStage }
 
     return cell.cropType === null ? null : publicCell
   }
@@ -51,7 +51,7 @@ function genSow(gameState) {
 
   return (cropTypeToSow) => {
     if (currentCell() === null) {
-      setCurrentCell(gameState, createCell(cropTypeToSow))
+      setCurrentCell(gameState, new WorldGridCell(cropTypeToSow))
     } else {
       console.error("Unable to sow crop: cell is already occupied")
     }
@@ -65,9 +65,9 @@ function genHarvest(gameState) {
     const cell = currentCell()
 
     if (cell !== null) {
-      setCurrentCell(gameState, createCell(null))
+      setCurrentCell(gameState, new WorldGridCell())
 
-      if (cell.growthStage === growthStage.RIPENING) {
+      if (cell.growthStage === GrowthStage.RIPENING) {
         ++gameState.player.inventory[cell.cropType]
       }
     }
@@ -80,7 +80,7 @@ function genIsReadyToHarvest(gameState) {
   return () => {
     const cell = currentCell()
 
-    return cell !== null && cell.growthStage === growthStage.RIPENING
+    return cell !== null && cell.growthStage === GrowthStage.RIPENING
   }
 }
 
@@ -92,8 +92,8 @@ function setCurrentCell(gameState, cell) {
 
 export function genApi(gameState) {
   return {
-    ...cropType,
-    ...direction,
+    ...CropType,
+    ...Direction,
     WORLD_WIDTH: gameState.world.width,
     WORLD_HEIGHT: gameState.world.height,
     move: genMove(gameState),

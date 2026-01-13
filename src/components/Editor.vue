@@ -10,7 +10,7 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 
 import * as esLintBrowserify from "eslint-linter-browserify"
 
-import { store } from "@/game/state.js"
+import { reconstructState, store } from "@/game/state.js"
 
 import { codeStatus, messageType } from "@/game/worker.js"
 import { autoCompletionExtension } from "@/editor/autocompletion.js"
@@ -29,7 +29,11 @@ codeWorker.onmessage = (ev) => {
       codeIsRunning.value = ev.data.status === codeStatus.RUNNING
       break
     default:
-      store.deepMergeState(ev.data)
+      let gameState = ev.data
+
+      reconstructState(gameState)
+      store.deepMergeState(gameState)
+
       break
   }
 }
