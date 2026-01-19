@@ -3,13 +3,37 @@ body {
   background-color: var(--sol-base02);
 }
 
+p,
+legend {
+  font-family: "Inter";
+}
+
+p {
+  font-size: var(--h3-and-p-font-size);
+  color: var(--sol-base0);
+  font-weight: 300; /* Light */
+}
+
+legend {
+  font-size: var(--h2-font-size);
+  color: var(--sol-base1);
+}
+
+fieldset {
+  border-color: var(--sol-base01);
+}
+
+hr {
+  border-color: var(--sol-base01);
+}
+
 /* TODO: New font for buttons: something more bold? */
 .button {
-  width: 5rem;
-  height: 2rem;
+  min-width: 5rem;
+  min-height: 2rem;
   color: var(--sol-base03);
   border-style: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   filter: brightness(80%);
   transition: 150ms;
 

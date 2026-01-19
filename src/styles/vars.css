@@ -13,4 +13,14 @@
   --sol-blue: #268bd2;
   --sol-cyan: #2aa198;
   --sol-green: #859900;
+
+  --font-size-base: 18px;
+  --font-size-mod: 1.333;
+
+  --h4-font-size: calc(var(--font-size-base) / var(--font-size-mod));
+  --h3-and-p-font-size: var(--font-size-base);
+  --h2-font-size: calc(var(--h3-and-p-font-size) * var(--font-size-mod));
+  --h1-font-size: calc(var(--h2-font-size) * var(--font-size-mod));
+
+  --border-radius: 4px;
 }

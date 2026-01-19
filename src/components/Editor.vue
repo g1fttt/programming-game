@@ -11,10 +11,10 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 import * as esLintBrowserify from "eslint-linter-browserify"
 
 import { reconstructState, store } from "@/game/state.js"
-
 import { codeStatus, messageType } from "@/game/worker.js"
-import { autoCompletionExtension } from "@/editor/autocompletion.js"
 import CodeWorker from "@/game/worker.js?worker"
+
+import { autoCompletionExtension } from "@/editor/autocompletion.js"
 
 import { onMounted, ref, toRaw } from "vue"
 
@@ -54,8 +54,7 @@ onMounted(() => {
     },
   }
 
-  const editorStartDoc =
-    window.localStorage.getItem("editorStartDoc") ?? 'console.log("Hello, World!")'
+  const editorStartDoc = localStorage.getItem("editorStartDoc") ?? 'console.log("Hello, World!")'
 
   const editorStartState = EditorState.create({
     doc: editorStartDoc,
@@ -75,8 +74,8 @@ onMounted(() => {
     parent: editAreaRef.value,
   })
 
-  window.addEventListener("beforeunload", () => {
-    window.localStorage.setItem("editorStartDoc", editorView.state.doc.toString())
+  addEventListener("beforeunload", () => {
+    localStorage.setItem("editorStartDoc", editorView.state.doc.toString())
   })
 })
 

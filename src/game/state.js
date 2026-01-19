@@ -143,16 +143,27 @@ function deepMergeState(newState) {
   merge(state, newState)
 }
 
-// TODO: Enlarge, do not create the new one
-function updateGridSizeBy(sizeMod /* 1 or -1 */) {
-  const newWidth = clamp(state.world.width + sizeMod, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
-  const newHeight = clamp(state.world.height + sizeMod, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
-  const newGrid = createGrid(newWidth, newHeight)
+function enlargeWorldGrid() {
+  state.world.width = clamp(state.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
+  state.world.height = clamp(state.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
 
-  state.player.pos = { x: 0, y: 0 }
+  let newGrid = state.world.grid
 
-  state.world.width = newWidth
-  state.world.height = newHeight
+  let newRow = []
+
+  for (let x = 0; x < state.world.width; ++x) {
+    newRow.push(new WorldGridCell())
+  }
+
+  newGrid.splice(0, 0, newRow)
+
+  for (let y = 0; y < state.world.height; ++y) {
+    newGrid[y].push(new WorldGridCell())
+  }
+
+  // Don't let the player to go up along with the new grid
+  ++state.player.pos.y
+
   state.world.grid = newGrid
 }
 
@@ -160,5 +171,6 @@ export const store = {
   state: readonly(state),
   tickState: tickState,
   deepMergeState: deepMergeState,
-  updateGridSizeBy: updateGridSizeBy,
+  enlargeWorldGrid: enlargeWorldGrid,
+  canUpgradeWorldGrid: () => false,
 }
