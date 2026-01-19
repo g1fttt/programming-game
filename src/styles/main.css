@@ -34,11 +34,11 @@ hr {
   color: var(--sol-base03);
   border-style: none;
   border-radius: var(--border-radius);
-  filter: brightness(80%);
+  filter: var(--inactive-button-brightness);
   transition: 150ms;
 
   &:hover {
-    filter: brightness(100%);
+    filter: var(--active-button-brightness);
   }
 
   &:active {

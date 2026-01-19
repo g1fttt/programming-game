@@ -53,7 +53,7 @@ button {
 
   &:disabled {
     pointer-events: none;
-    filter: brightness(80%);
+    filter: var(--inactive-button-brightness);
   }
 }
 
@@ -63,7 +63,7 @@ button {
   outline-style: dashed;
 
   &:disabled {
-    filter: brightness(100%);
+    filter: var(--active-button-brightness);
   }
 }
 

@@ -23,4 +23,7 @@
   --h1-font-size: calc(var(--h2-font-size) * var(--font-size-mod));
 
   --border-radius: 4px;
+
+  --inactive-button-brightness: brightness(80%);
+  --active-button-brightness: brightness(100%);
 }
