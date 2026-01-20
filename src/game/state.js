@@ -3,12 +3,12 @@ import { msToTicks, clamp } from "@/game/utils.js"
 import { reactive, readonly } from "vue"
 
 export const CropType = Object.freeze({
-  CARROT: "carrot",
-  LETTUCE: "lettuce",
-  ONION: "onion",
-  POTATO: "potato",
   RADISH: "radish",
+  LETTUCE: "lettuce",
   TURNIP: "turnip",
+  POTATO: "potato",
+  CARROT: "carrot",
+  ONION: "onion",
 })
 
 export const GrowthStage = Object.freeze({
@@ -18,6 +18,21 @@ export const GrowthStage = Object.freeze({
 })
 
 export const MS_PER_TICK = 10
+
+function cropTypeToGrowthTimeMs(cropType) {
+  switch (cropType) {
+    case CropType.RADISH:
+      return 4500
+    case CropType.LETTUCE:
+      return 7000
+    case CropType.TURNIP:
+      return 9000
+    case CropType.POTATO:
+    case CropType.CARROT:
+    case CropType.ONION:
+      return 12000
+  }
+}
 
 class Tickable {
   constructor(ticksToTick) {
@@ -36,14 +51,16 @@ class Tickable {
     if (isDoneTicking) {
       this.ticksLeft = this.ticksToTick
     }
-
     return isDoneTicking
   }
 }
 
 export class WorldGridCell extends Tickable {
   constructor(cropType, growthStage) {
-    super(msToTicks(3000))
+    const growthTimeMs = cropTypeToGrowthTimeMs(cropType)
+    const growthTimeTicks = msToTicks(growthTimeMs)
+
+    super(growthTimeTicks)
 
     this.cropType = !cropType ? null : cropType
 
@@ -112,7 +129,7 @@ let state = reactive({
   player: {
     pos: { x: 0, y: 0 },
     inventory: genEmptyCropTypeStorage(),
-    seeds: genEmptyCropTypeStorage(),
+    seeds: { ...genEmptyCropTypeStorage(), radish: 1 },
   },
   world: {
     width: START_WORLD_WIDTH,

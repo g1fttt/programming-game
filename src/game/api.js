@@ -1,4 +1,5 @@
 import { CropType, WorldGridCell, GrowthStage } from "@/game/state.js"
+import { randomIntFromRange } from "@/game/utils.js"
 
 const Direction = Object.freeze({
   EAST: "east",
@@ -6,6 +7,12 @@ const Direction = Object.freeze({
   SOUTH: "south",
   NORTH: "north",
 })
+
+function setCurrentCell(gameState, cell) {
+  const playerPos = gameState.player.pos
+
+  gameState.world.grid[playerPos.y][playerPos.x] = cell
+}
 
 function genMove(gameState) {
   const wrap = (x, max) => (x + max) % max
@@ -50,12 +57,23 @@ function genSow(gameState) {
   const currentCell = genCurrentCell(gameState)
 
   return (cropTypeToSow) => {
-    if (currentCell() === null) {
-      setCurrentCell(gameState, new WorldGridCell(cropTypeToSow))
-    } else {
-      console.error("Unable to sow crop: cell is already occupied")
+    if (currentCell() !== null) {
+      throw "Unable to sow crop: the cell is already occupied"
     }
+
+    let seeds = gameState.player.seeds
+    if (seeds[cropTypeToSow] <= 0) {
+      throw "Unable to sow crop: not enough seeds"
+    }
+
+    --seeds[cropTypeToSow]
+
+    setCurrentCell(gameState, new WorldGridCell(cropTypeToSow))
   }
+}
+
+function genHasSeedsFor(gameState) {
+  return (cropType) => gameState.player.seeds[cropType] >= 1
 }
 
 function genHarvest(gameState) {
@@ -63,44 +81,39 @@ function genHarvest(gameState) {
 
   return () => {
     const cell = currentCell()
-
-    if (cell !== null) {
-      setCurrentCell(gameState, new WorldGridCell())
-
-      if (cell.growthStage === GrowthStage.RIPENING) {
-        ++gameState.player.inventory[cell.cropType]
-      }
+    if (cell === null) {
+      throw "Unable to harvest crop: the cell is empty"
     }
+
+    setCurrentCell(gameState, new WorldGridCell())
+
+    if (cell.growthStage !== GrowthStage.RIPENING) {
+      return
+    }
+
+    ++gameState.player.inventory[cell.cropType]
+
+    // 10% chance to not obtain any seeds from crop
+    if (randomIntFromRange(1, 100) <= 10) {
+      return
+    }
+
+    gameState.player.seeds[cell.cropType] += randomIntFromRange(1, 3)
   }
-}
-
-function genIsReadyToHarvest(gameState) {
-  const currentCell = genCurrentCell(gameState)
-
-  return () => {
-    const cell = currentCell()
-
-    return cell !== null && cell.growthStage === GrowthStage.RIPENING
-  }
-}
-
-function setCurrentCell(gameState, cell) {
-  const playerPos = gameState.player.pos
-
-  gameState.world.grid[playerPos.y][playerPos.x] = cell
 }
 
 export function genApi(gameState) {
   return {
     ...CropType,
     ...Direction,
+    ...GrowthStage,
     WORLD_WIDTH: gameState.world.width,
     WORLD_HEIGHT: gameState.world.height,
     move: genMove(gameState),
     currentCell: genCurrentCell(gameState),
     sow: genSow(gameState),
+    hasSeedsFor: genHasSeedsFor(gameState),
     harvest: genHarvest(gameState),
-    isReadyToHarvest: genIsReadyToHarvest(gameState),
     console: {
       log: (obj) => console.log(obj),
     },

@@ -12,7 +12,7 @@ The small game about writing JavaScript scripts and farming.
 | Name | Status | Commentary |
 | ---- | ------ | ---------- |
 | Crop growth system | ✅ | |
-| Seeds and economy system | ❌| |
+| Seeds and economy system | 🚧 | |
 | Soil watering mechanics | ❌| |
 | Player cooldown and action heaviness | ❌| |
 | World grid upgrade for resources | ❌| Technically already implemented, but without taking resources into account |
@@ -22,5 +22,5 @@ The small game about writing JavaScript scripts and farming.
 | Name | Status |
 | ---- | ------ |
 | Code editor with memory among sessions | ✅ |
-| Autocompletion for game api | ❌|
+| Autocompletion for game api | ✅ |
 | Non-blocking code executor | ✅ |

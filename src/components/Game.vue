@@ -4,10 +4,10 @@ import World from "@/components/World.vue"
 </script>
 
 <template>
-  <section id="game-container">
+  <div id="game-container">
     <Ui />
     <World />
-  </section>
+  </div>
 </template>
 
 <style scoped>

@@ -13,6 +13,10 @@ function autoCompletions() {
     SOUTH: { type: "constant" },
     NORTH: { type: "constant" },
 
+    SPROUTING: { type: "constant" },
+    SEEDLING: { type: "constant" },
+    RIPENING: { type: "constant" },
+
     WORLD_WIDTH: { type: "constant" },
     WORLD_HEIGHT: { type: "constant" },
 
@@ -29,17 +33,47 @@ Object { cropType: string, growthStage: number }`,
     },
     sow: {
       type: "function",
-      info: "Sets the current cell to the provided type of crop if it is empty, otherwise writes error to the browser console.",
+      info: `Sets the current cell crop type to the provided one.
+
+If current cell is not empty, then function will throw an excpetion.
+
+If the player doesn't have any seeds for the provided crop type, then function will throw an exception.`,
+    },
+    hasSeedsFor: {
+      type: "function",
+      info: "Returns true if there is at least 1 seed for provided cropType.",
     },
     harvest: {
       type: "function",
-      info: "If current cell has crop at it and it is isReadyToHarvest(), then increments crop score by 1 and sets cell to null.",
-    },
-    isReadyToHarvest: {
-      type: "function",
-      info: "Returns true if growthStage of the current cell equals to 3.",
+      info: `Harvests current cell under player, increments crop score by 1 and gives the player from 1 to 3 seeds.
+
+If crop was not ready for a ripe, then score will not be incremented.
+
+If current cell doesn't have any crop at it, then function will throw an exception.
+
+Has 10% chance to not give player any seeds, whoops...`,
     },
     console: [{ label: "log", type: "function" }],
+  }
+}
+
+function nestedAutoCompletionOptions(nodeBefore, completions) {
+  const text = nodeBefore.text
+  if (!text.includes(".")) {
+    return null
+  }
+
+  const parts = text.split(".")
+  const parentKey = parts.at(-2)
+
+  const autoCompletionOptions = completions[parentKey]
+  if (!autoCompletionOptions || !Array.isArray(autoCompletionOptions)) {
+    return null
+  }
+
+  return {
+    from: nodeBefore.from + text.lastIndexOf(".") + 1,
+    options: autoCompletionOptions,
   }
 }
 
@@ -51,16 +85,9 @@ export function autoCompletionExtension(context) {
 
   const completions = autoCompletions()
 
-  const text = nodeBefore.text
-
-  if (text.includes(".")) {
-    const parts = text.split(".")
-    const parentKey = parts.at(-2)
-
-    return {
-      from: nodeBefore.from + text.lastIndexOf(".") + 1,
-      options: completions[parentKey],
-    }
+  const nestedOptions = nestedAutoCompletionOptions(nodeBefore, completions)
+  if (nestedOptions !== null) {
+    return nestedOptions
   }
 
   const toPlain = ([key, value]) => {

@@ -53,9 +53,15 @@ async function runCode(interpreter, gameState) {
     while (accumulator >= MS_PER_TICK) {
       store.tickState(gameState)
 
-      if (interpreter.step()) {
-        sendCodeStatus()
-      } else {
+      try {
+        if (interpreter.step()) {
+          sendCodeStatus()
+        } else {
+          break mainLoop
+        }
+      } catch (err) {
+        console.error(err)
+
         break mainLoop
       }
 

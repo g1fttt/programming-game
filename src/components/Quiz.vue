@@ -54,19 +54,17 @@ provide("quizState", { onChoiceClick, isAnyPressed })
   <fieldset>
     <legend>{{ isAnswering ? currentQuestion.label : "Summary" }}</legend>
 
-    <div v-if="isAnswering">
-      <div id="quiz-choices-container">
-        <ChoiceButton
-          v-for="(answer, i) in currentQuestion.answers"
-          :key="answer.label"
-          :label="answer.label"
-          :correct="answer.correct"
-          :backgroundColor="possibleColors[i % possibleColors.length]"
-        />
-      </div>
+    <div v-if="isAnswering" id="quiz-choices-container">
+      <ChoiceButton
+        v-for="(answer, i) in currentQuestion.answers"
+        :key="answer.label"
+        :label="answer.label"
+        :correct="answer.correct"
+        :backgroundColor="possibleColors[i % possibleColors.length]"
+      />
     </div>
     <div v-else>
-      <p>Congratulations! You finished the quiz and there's your score: {{ score }}</p>
+      <p>Congratulations! You finished the quiz and there is your score: {{ score }}</p>
     </div>
 
     <hr id="button-row-separator" />

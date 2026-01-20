@@ -15,7 +15,7 @@ export function clamp(x, min, max) {
   return Math.min(Math.max(x, min), max)
 }
 
-function randomInt(min, max) {
+export function randomIntFromRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
@@ -24,7 +24,7 @@ export function shuffledArray(array) {
   let newArray = structuredClone(array)
 
   for (let i = newArray.length - 1; i > 0; --i) {
-    const j = randomInt(0, i)
+    const j = randomIntFromRange(0, i)
 
     if (i !== j) {
       const temp = newArray[i]

@@ -27,10 +27,10 @@ export default [
     ],
   },
   {
-    label: "What is the most effective way to sow potato?",
+    label: "What is the most effective way to sow carrot?",
     answers: [
-      { label: "Surrounded by carrot or empty cells on each side", correct: true },
-      { label: "Surrounded by only potatoes" },
+      { label: "Surrounded by potato on each side", correct: true },
+      { label: "Surrounded by only carrot" },
       { label: "There's potato!?" },
       { label: "Surrounded by empty cells on each side" },
     ],
