@@ -161,11 +161,17 @@ function deepMergeState(newState) {
 }
 
 function enlargeWorldGrid() {
-  state.world.width = clamp(state.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
-  state.world.height = clamp(state.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
+  const newWorldWidth = clamp(state.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
+  const newWorldHeight = clamp(state.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
+
+  if (newWorldWidth === state.world.width && newWorldHeight === state.world.height) {
+    return
+  }
+
+  state.world.width = newWorldWidth
+  state.world.height = newWorldHeight
 
   let newGrid = state.world.grid
-
   let newRow = []
 
   for (let x = 0; x < state.world.width; ++x) {
