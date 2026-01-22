@@ -1,6 +1,7 @@
 <script setup>
 import Account from "@/components/Account.vue"
 import Quiz from "@/components/Quiz.vue"
+import TaskNotification from "@/components/TaskNotification.vue"
 
 import { store } from "@/game/state.js"
 
@@ -32,24 +33,33 @@ onUnmounted(() => observer?.disconnect())
 </script>
 
 <template>
-  <dialog id="quiz-dialog" ref="quizDialogRef">
-    <!-- Don't do any unnecessary calculations before we even open the quiz dialog -->
-    <Quiz v-if="isQuizDialogOpen" @close="closeQuizDialog()" />
-  </dialog>
+  <div id="ui-container">
+    <Account />
 
-  <Account />
+    <TaskNotification />
 
-  <div id="right-panel-container">
-    <button @click="store.enlargeWorldGrid()" class="button game-button">Upgrade</button>
-    <button @click="openQuizDialog()" class="button misc-button">Quiz</button>
+    <div id="button-column">
+      <button @click="store.enlargeWorldGrid()" class="button game-button">Upgrade</button>
+      <button @click="openQuizDialog()" class="button misc-button">Quiz</button>
+    </div>
+
+    <dialog id="quiz-dialog" ref="quizDialogRef">
+      <!-- Don't do any unnecessary calculations before we even open the quiz dialog -->
+      <Quiz v-if="isQuizDialogOpen" @close="closeQuizDialog()" />
+    </dialog>
   </div>
 </template>
 
 <style scoped>
+#ui-container {
+  --dialog-border-radius: 8px;
+  --dialog-border-color: #00252f;
+}
+
 #quiz-dialog {
   background-color: var(--sol-base02);
-  border-radius: 8px;
-  border-color: #00252f;
+  border-radius: var(--dialog-border-radius);
+  border-color: var(--dialog-border-color);
 
   &::backdrop {
     backdrop-filter: blur(8px);
@@ -57,27 +67,14 @@ onUnmounted(() => observer?.disconnect())
   }
 }
 
-#right-panel-container {
+#button-column {
   display: flex;
   flex-direction: column;
   position: absolute;
-  height: 100%;
   right: 0;
-  justify-content: space-between;
-
-  --button-margin: 1rem;
-
-  & > button:first-of-type {
-    margin-top: var(--button-margin);
-  }
-
-  & > button:last-of-type {
-    margin-bottom: var(--button-margin);
-  }
-
-  & > button {
-    margin-right: 1rem;
-  }
+  bottom: 0;
+  margin: 1rem;
+  gap: 1rem;
 
   & > .game-button {
     background-color: var(--sol-yellow);

@@ -1,14 +1,24 @@
 import { MS_PER_TICK } from "@/game/state.js"
 
-export function getPublicAsset(path) {
+export function publicAsset(path) {
   const base = import.meta.env.BASE_URL
 
   return `${base}/${path}`.replace(/\/+/g, "/")
 }
 
+export function iconTexture(cropType, name) {
+  const iconTexturePath = publicAsset(`/assets/${cropType}/${name}.png`)
+
+  return new URL(iconTexturePath, import.meta.url)
+}
+
 // NOTE: Very inconsistent due to setTimeout nature: very web-browser dependant
 export function msToTicks(timeMs) {
   return Math.round(timeMs / MS_PER_TICK)
+}
+
+export function ticksToMs(ticks) {
+  return ticks * MS_PER_TICK
 }
 
 export function clamp(x, min, max) {

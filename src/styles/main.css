@@ -29,8 +29,11 @@ hr {
 
 /* TODO: New font for buttons: something more bold? */
 .button {
-  min-width: 5rem;
-  min-height: 2rem;
+  --button-default-width: 5rem;
+  --button-default-height: 2rem;
+
+  min-width: var(--button-default-width);
+  min-height: var(--button-default-height);
   color: var(--sol-base03);
   border-style: none;
   border-radius: var(--border-radius);
@@ -44,4 +47,16 @@ hr {
   &:active {
     background-color: var(--sol-base00) !important;
   }
+}
+
+.icon-texture {
+  --icon-texture-size: 32px;
+
+  width: var(--icon-texture-size);
+  height: var(--icon-texture-size);
+  image-rendering: pixelated;
+}
+
+.invisible {
+  display: none !important;
 }

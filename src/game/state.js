@@ -1,4 +1,4 @@
-import { msToTicks, clamp } from "@/game/utils.js"
+import { msToTicks, clamp, randomIntFromRange, ticksToMs } from "@/game/utils.js"
 
 import { reactive, readonly } from "vue"
 
@@ -34,10 +34,23 @@ function cropTypeToGrowthTimeMs(cropType) {
   }
 }
 
+function randomCropType() {
+  const cropTypes = Object.values(CropType)
+  const randomTypeIndex = randomIntFromRange(0, cropTypes.length - 1)
+
+  return cropTypes[randomTypeIndex]
+}
+
 class Tickable {
-  constructor(ticksToTick) {
-    this.ticksLeft = ticksToTick
+  constructor(ticksToTick, ticksLeft) {
+    // Actual tick-counter
+    this.ticksLeft = ticksLeft === undefined ? ticksToTick : ticksLeft
+    // Used to reset tick-counter to
     this.ticksToTick = ticksToTick
+  }
+
+  static fromObject(object) {
+    return new Tickable(object.ticksToTick, object.ticksLeft)
   }
 
   static reconstruct(instance, object) {
@@ -52,6 +65,15 @@ class Tickable {
       this.ticksLeft = this.ticksToTick
     }
     return isDoneTicking
+  }
+
+  // Returns how many time is left to tick in ms
+  timeLeft() {
+    return ticksToMs(this.ticksLeft)
+  }
+
+  timeLeftInSeconds() {
+    return Math.floor(this.timeLeft() / 1000)
   }
 }
 
@@ -86,23 +108,44 @@ export class WorldGridCell extends Tickable {
     if (isDoneTicking && this.growthStage < GrowthStage.RIPENING) {
       this.growthStage = clamp(this.growthStage + 1, GrowthStage.SPROUTING, GrowthStage.RIPENING)
     }
-
     return isDoneTicking
   }
 }
 
 export function reconstructState(gameStateObject) {
+  let grid = gameStateObject.world.grid
+
   for (let y = 0; y < gameStateObject.world.height; ++y) {
     for (let x = 0; x < gameStateObject.world.width; ++x) {
-      gameStateObject.world.grid[y][x] = WorldGridCell.fromObject(gameStateObject.world.grid[y][x])
+      grid[y][x] = WorldGridCell.fromObject(grid[y][x])
     }
   }
+
+  let task = gameStateObject.task
+  task.tickable = Tickable.fromObject(task.tickable)
 }
 
 function genEmptyCropTypeStorage() {
   const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
 
   return Object.fromEntries(entries)
+}
+
+function updateCurrentTask(task, playerInventory) {
+  // TODO: Create wide variety of tasks, not just one
+  task.description = "Collect until time expires"
+
+  task.goal.type = randomCropType()
+  task.goal.amount = randomIntFromRange(25, 50)
+
+  task.startingPointAmount = playerInventory[task.goal.type]
+}
+
+function genTaskReward() {
+  return {
+    type: randomCropType(),
+    amount: randomIntFromRange(1, 3),
+  }
 }
 
 function createGrid(width, height) {
@@ -136,6 +179,16 @@ let state = reactive({
     height: START_WORLD_HEIGHT,
     grid: createGrid(START_WORLD_WIDTH, START_WORLD_HEIGHT),
   },
+  task: {
+    tickable: new Tickable(msToTicks(60_000)),
+    isAvailable: false,
+    description: "No task is currently available",
+    goal: {
+      type: null, // CropType
+      amount: 0,
+    },
+    startingPointAmount: 0,
+  },
 })
 
 function tickState(gameState) {
@@ -144,6 +197,22 @@ function tickState(gameState) {
       let cell = gameState.world.grid[y][x]
       cell.tick()
     }
+  }
+
+  let task = gameState.task
+  let playerSeeds = gameState.player.seeds
+  const playerInventory = gameState.player.inventory
+
+  const isGoalAchieved = playerInventory[task.goal.type] >= task.goal.amount
+
+  if (task.tickable.tick()) {
+    if (!task.isAvailable) {
+      task.isAvailable = true
+    } else if (isGoalAchieved) {
+      const reward = genTaskReward()
+      playerSeeds[reward.type] = reward.amount
+    }
+    updateCurrentTask(task, playerInventory)
   }
 }
 
