@@ -3,15 +3,18 @@ import { store } from "@/game/state.js"
 import { iconTexture } from "@/game/utils"
 
 const task = store.state.task
+const playerInventory = store.state.player.inventory
 </script>
 
 <template>
   <div id="task-notification">
     <p id="description">{{ task.description }}</p>
-    <div :class="{ invisible: !task.isAvailable }">
+    <div v-if="task.isAvailable">
       <div id="icon">
         <img :src="iconTexture(task.goal.type, 'inventory')" class="icon-texture" />
-        <p id="goal-amount">{{ task.startingPointAmount }}/{{ task.goal.amount }}</p>
+        <p id="goal-amount">
+          {{ playerInventory[task.goal.type] - task.startingPointAmount }}/{{ task.goal.amount }}
+        </p>
       </div>
     </div>
     <p>({{ task.tickable.timeLeftInSeconds() }}s)</p>

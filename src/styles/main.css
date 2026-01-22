@@ -56,7 +56,3 @@ hr {
   height: var(--icon-texture-size);
   image-rendering: pixelated;
 }
-
-.invisible {
-  display: none !important;
-}
