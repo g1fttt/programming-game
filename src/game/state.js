@@ -200,15 +200,16 @@ function tickState(gameState) {
   }
 
   let task = gameState.task
-  let playerSeeds = gameState.player.seeds
-  const playerInventory = gameState.player.inventory
-
-  const isGoalAchieved = playerInventory[task.goal.type] >= task.goal.amount
 
   if (task.tickable.tick()) {
+    const playerInventory = gameState.player.inventory
+    const isGoalAchieved = playerInventory[task.goal.type] >= task.goal.amount
+
     if (!task.isAvailable) {
       task.isAvailable = true
     } else if (isGoalAchieved) {
+      let playerSeeds = gameState.player.seeds
+
       const reward = genTaskReward()
       playerSeeds[reward.type] = reward.amount
     }

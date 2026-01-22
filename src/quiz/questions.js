@@ -45,7 +45,7 @@ export default [
     ],
   },
   {
-    label: "How will game behave if you will cross the game border?",
+    label: "How will the game behave if you will cross the game border?",
     answers: [
       { label: "You will find yourself at the opposite side of the grid", correct: true },
       { label: "Web browser will crash immediately" },
