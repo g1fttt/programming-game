@@ -11,14 +11,6 @@ export const CropType = Object.freeze({
   ONION: "onion",
 })
 
-export const GrowthStage = Object.freeze({
-  SPROUTING: 1,
-  SEEDLING: 2,
-  RIPENING: 3,
-})
-
-export const MS_PER_TICK = 10
-
 function cropTypeToGrowthTimeMs(cropType) {
   switch (cropType) {
     case CropType.RADISH:
@@ -31,7 +23,13 @@ function cropTypeToGrowthTimeMs(cropType) {
     case CropType.CARROT:
     case CropType.ONION:
       return 12000
+    default:
+      return 0
   }
+}
+
+function cropTypeToGrowthTimeTicks(cropType) {
+  return msToTicks(cropTypeToGrowthTimeMs(cropType))
 }
 
 function randomCropType() {
@@ -41,30 +39,50 @@ function randomCropType() {
   return cropTypes[randomTypeIndex]
 }
 
+function emptyCropTypeStorage() {
+  const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
+
+  return Object.fromEntries(entries)
+}
+
+export const GrowthStage = Object.freeze({
+  SPROUTING: 1,
+  SEEDLING: 2,
+  RIPENING: 3,
+})
+
+export const MS_PER_TICK = 10
+
 class Tickable {
-  constructor(ticksToTick, ticksLeft) {
+  constructor(ticksToTick) {
+    this.resetTicks(ticksToTick)
+  }
+
+  tick() {
+    if (this.ticksLeft <= 0) {
+      this.ticksLeft = this.ticksToTick
+
+      // Automatically reset tick step modifier once we are done ticking this entity
+      delete this.tickStep
+
+      return true
+    }
+
+    this.ticksLeft -= this.tickStep ? this.tickStep : 1
+
+    return false
+  }
+
+  resetTicks(ticksToTick) {
     // Actual tick-counter
-    this.ticksLeft = ticksLeft === undefined ? ticksToTick : ticksLeft
+    this.ticksLeft = ticksToTick
     // Used to reset tick-counter to
     this.ticksToTick = ticksToTick
   }
 
-  static fromObject(object) {
-    return new Tickable(object.ticksToTick, object.ticksLeft)
-  }
-
-  static reconstruct(instance, object) {
-    instance.ticksLeft = object.ticksLeft
-    instance.tickToTick = object.ticksToTick
-  }
-
-  tick() {
-    const isDoneTicking = --this.ticksLeft <= 0
-
-    if (isDoneTicking) {
-      this.ticksLeft = this.ticksToTick
-    }
-    return isDoneTicking
+  // TODO: Make it actually adding the modifier rather than assigning
+  applyTickStepModifier(modifier) {
+    this.tickStep = modifier
   }
 
   // Returns how many time is left to tick in ms
@@ -77,12 +95,9 @@ class Tickable {
   }
 }
 
-export class WorldGridCell extends Tickable {
-  constructor(cropType, growthStage) {
-    const growthTimeMs = cropTypeToGrowthTimeMs(cropType)
-    const growthTimeTicks = msToTicks(growthTimeMs)
-
-    super(growthTimeTicks)
+class WorldGridCell extends Tickable {
+  constructor(cropType, growthStage, isWatered) {
+    super(cropTypeToGrowthTimeTicks(cropType))
 
     this.cropType = !cropType ? null : cropType
 
@@ -93,25 +108,52 @@ export class WorldGridCell extends Tickable {
     } else {
       this.growthStage = GrowthStage.SPROUTING
     }
+
+    this.isWatered = typeof isWatered === "boolean" ? isWatered : false
+    this.water = new Tickable(msToTicks(15_000))
   }
 
   static fromObject(object) {
-    let cell = new WorldGridCell(object.cropType, object.growthStage)
-    Tickable.reconstruct(cell, object)
+    let cell = structuredClone(object)
+
+    Object.setPrototypeOf(cell, WorldGridCell.prototype)
+    Object.setPrototypeOf(cell.water, Tickable.prototype)
 
     return cell
   }
 
   tick() {
+    if (this.isWatered) {
+      if (this.water.tick()) this.isWatered = false
+      else this.applyTickStepModifier(2)
+    }
+
+    if (!this.cropType) {
+      return false
+    }
+
     const isDoneTicking = super.tick()
 
-    if (isDoneTicking && this.growthStage < GrowthStage.RIPENING) {
+    if (isDoneTicking && this.growthStage !== GrowthStage.RIPENING) {
       this.growthStage = clamp(this.growthStage + 1, GrowthStage.SPROUTING, GrowthStage.RIPENING)
     }
     return isDoneTicking
   }
+
+  resetCrop() {
+    this.cropType = null
+    this.growthStage = null
+  }
+
+  resetWith(cropType) {
+    this.cropType = cropType
+    this.growthStage = GrowthStage.SPROUTING
+    this.resetTicks(cropTypeToGrowthTimeTicks(cropType))
+  }
 }
 
+// Reconstructs game state object after transition between main thread and worker because
+// postMessage sends only fields of the game state object, but not methods.
 export function reconstructState(gameStateObject) {
   let grid = gameStateObject.world.grid
 
@@ -121,14 +163,7 @@ export function reconstructState(gameStateObject) {
     }
   }
 
-  let task = gameStateObject.task
-  task.tickable = Tickable.fromObject(task.tickable)
-}
-
-function genEmptyCropTypeStorage() {
-  const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
-
-  return Object.fromEntries(entries)
+  Object.setPrototypeOf(gameStateObject.task.tickable, Tickable.prototype)
 }
 
 function updateCurrentTask(task, playerInventory) {
@@ -139,13 +174,6 @@ function updateCurrentTask(task, playerInventory) {
   task.goal.amount = randomIntFromRange(25, 50)
 
   task.startingPointAmount = playerInventory[task.goal.type]
-}
-
-function genTaskReward() {
-  return {
-    type: randomCropType(),
-    amount: randomIntFromRange(1, 3),
-  }
 }
 
 function createGrid(width, height) {
@@ -171,8 +199,8 @@ const MAX_WORLD_HEIGHT = 10
 let state = reactive({
   player: {
     pos: { x: 0, y: 0 },
-    inventory: genEmptyCropTypeStorage(),
-    seeds: { ...genEmptyCropTypeStorage(), radish: 1 },
+    inventory: emptyCropTypeStorage(),
+    seeds: { ...emptyCropTypeStorage(), radish: 1 },
   },
   world: {
     width: START_WORLD_WIDTH,
@@ -210,7 +238,10 @@ function tickState(gameState) {
     } else if (isGoalAchieved) {
       let playerSeeds = gameState.player.seeds
 
-      const reward = genTaskReward()
+      const reward = {
+        type: randomCropType(),
+        amount: randomIntFromRange(1, 3),
+      }
       playerSeeds[reward.type] = reward.amount
     }
     updateCurrentTask(task, playerInventory)
@@ -265,5 +296,6 @@ export const store = {
   tickState: tickState,
   deepMergeState: deepMergeState,
   enlargeWorldGrid: enlargeWorldGrid,
+  // TODO:
   canUpgradeWorldGrid: () => false,
 }

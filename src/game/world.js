@@ -11,13 +11,11 @@ export function worldGridRenderInfo() {
       const cell = world.grid[y][x]
 
       grid.push({
+        ...cell,
         id: `${x}-${y}`,
-        cropType: cell.cropType,
-        growthStage: cell.growthStage,
         isPlayer: player.pos.x === x && player.pos.y === y,
       })
     }
   }
-
   return grid
 }

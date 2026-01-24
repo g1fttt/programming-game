@@ -28,8 +28,11 @@ function autoCompletions() {
       type: "function",
       info: `Returns the current cell if it contains any crop, otherwise returns null.
 
-The cell has the next layout:
-Object { cropType: string, growthStage: number }`,
+The cell has fields listed below:
+
+cropType: string
+growthStage: number
+isWatered: boolean`,
     },
     sow: {
       type: "function",
@@ -45,13 +48,17 @@ If the player doesn't have any seeds for the provided crop type, then function w
     },
     harvest: {
       type: "function",
-      info: `Harvests current cell under player, increments crop score by 1 and gives the player from 1 to 3 seeds.
+      info: `Harvests the current cell, increments crop score by 1 and gives the player from 1 to 3 seeds.
 
 If crop was not ready for a ripe, then score will not be incremented.
 
 If current cell doesn't have any crop at it, then function will throw an exception.
 
 Has 10% chance to not give player any seeds, whoops...`,
+    },
+    water: {
+      type: "function",
+      info: "Waters the current cell for 15 seconds which doubles the crop growth speed.",
     },
     console: [{ label: "log", type: "function" }],
   }

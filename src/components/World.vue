@@ -7,17 +7,21 @@ import { computed } from "vue"
 
 const worldGrid = computed(worldGridRenderInfo)
 
-function cellTextures(cropType, growthStage) {
+function cellTextures(cell) {
   const assetsPath = "/assets"
 
   let layers = []
 
-  if (cropType !== null) {
-    const cropTexturePath = publicAsset(`${assetsPath}/${cropType}/stage-${growthStage}.png`)
+  if (cell.cropType !== null) {
+    const cropTexturePath = publicAsset(
+      `${assetsPath}/${cell.cropType}/stage-${cell.growthStage}.png`,
+    )
     layers.push(`url(${new URL(cropTexturePath, import.meta.url)})`)
   }
 
-  const soilTexturePath = publicAsset(`${assetsPath}/soil.png`)
+  const desiredSoilTexture = cell.isWatered ? "watered-soil" : "soil"
+  const soilTexturePath = publicAsset(`${assetsPath}/${desiredSoilTexture}.png`)
+
   layers.push(`url(${new URL(soilTexturePath, import.meta.url)})`)
 
   return layers.join(", ")
@@ -31,7 +35,7 @@ function cellTextures(cropType, growthStage) {
       :key="cell.id"
       class="world-cell"
       :class="{ 'is-player': cell.isPlayer }"
-      :style="{ '--textures': cellTextures(cell.cropType, cell.growthStage) }"
+      :style="{ '--textures': cellTextures(cell) }"
     ></div>
   </div>
 </template>
