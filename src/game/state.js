@@ -2,6 +2,17 @@ import { msToTicks, clamp, randomIntFromRange, ticksToMs } from "@/game/utils.js
 
 import { reactive, readonly } from "vue"
 
+const RADISH_GROWTH_TIME = 4500
+const LETTUCE_GROWTH_TIME = 7000
+const TURNIP_GROWTH_TIME = 9000
+const POTATO_GROWTH_TIME = 12_000
+const CARROT_GROWTH_TIME = 12_000
+const ONION_GROWTH_TIME = 12_000
+
+const WATER_RETENTION_TIME = 15_000
+
+const TASK_HOLD_TIME = 60_000
+
 export const CropType = Object.freeze({
   RADISH: "radish",
   LETTUCE: "lettuce",
@@ -14,17 +25,19 @@ export const CropType = Object.freeze({
 function cropTypeToGrowthTimeMs(cropType) {
   switch (cropType) {
     case CropType.RADISH:
-      return 4500
+      return RADISH_GROWTH_TIME
     case CropType.LETTUCE:
-      return 7000
+      return LETTUCE_GROWTH_TIME
     case CropType.TURNIP:
-      return 9000
+      return TURNIP_GROWTH_TIME
     case CropType.POTATO:
+      return POTATO_GROWTH_TIME
     case CropType.CARROT:
+      return CARROT_GROWTH_TIME
     case CropType.ONION:
-      return 12000
+      return ONION_GROWTH_TIME
     default:
-      return 0
+      throw "Invalid crop type provided"
   }
 }
 
@@ -59,6 +72,10 @@ class Tickable {
   }
 
   tick() {
+    if (this.ticksLeft === null) {
+      return false
+    }
+
     if (this.ticksLeft <= 0) {
       this.ticksLeft = this.ticksToTick
 
@@ -91,13 +108,15 @@ class Tickable {
   }
 
   timeLeftInSeconds() {
-    return Math.floor(this.timeLeft() / 1000)
+    return Math.round(this.timeLeft() / 1000)
   }
 }
 
 class WorldGridCell extends Tickable {
   constructor(cropType, growthStage, isWatered) {
-    super(cropTypeToGrowthTimeTicks(cropType))
+    const growthTimeTicks = cropType ? cropTypeToGrowthTimeTicks(cropType) : null
+
+    super(growthTimeTicks)
 
     this.cropType = !cropType ? null : cropType
 
@@ -110,7 +129,7 @@ class WorldGridCell extends Tickable {
     }
 
     this.isWatered = typeof isWatered === "boolean" ? isWatered : false
-    this.water = new Tickable(msToTicks(15_000))
+    this.water = new Tickable(msToTicks(WATER_RETENTION_TIME))
   }
 
   static fromObject(object) {
@@ -152,6 +171,47 @@ class WorldGridCell extends Tickable {
   }
 }
 
+class Task extends Tickable {
+  constructor() {
+    super(msToTicks(TASK_HOLD_TIME))
+
+    this.isAvailable = false
+    this.description = "No task is currently available"
+    this.goal = { type: null /* Croptype */, amount: 0 }
+    this.startingPointAmount = 0
+  }
+
+  tick(playerInventory, playerSeeds) {
+    const isDoneTicking = super.tick()
+
+    if (isDoneTicking) {
+      const isGoalAchieved = playerInventory[this.goal.type] >= this.goal.amount
+
+      if (!this.isAvailable) {
+        this.isAvailable = true
+      } else if (isGoalAchieved) {
+        const reward = {
+          type: randomCropType(),
+          amount: randomIntFromRange(1, 3),
+        }
+        playerSeeds[reward.type] = reward.amount
+      }
+      this.update(playerInventory)
+    }
+    return isDoneTicking
+  }
+
+  update(playerInventory) {
+    // TODO: Create wide variety of tasks, not just one
+    this.description = "Collect until time expires"
+
+    this.goal.type = randomCropType()
+    this.goal.amount = randomIntFromRange(25, 50)
+
+    this.startingPointAmount = playerInventory[this.goal.type]
+  }
+}
+
 // Reconstructs game state object after transition between main thread and worker because
 // postMessage sends only fields of the game state object, but not methods.
 export function reconstructState(gameStateObject) {
@@ -163,17 +223,7 @@ export function reconstructState(gameStateObject) {
     }
   }
 
-  Object.setPrototypeOf(gameStateObject.task.tickable, Tickable.prototype)
-}
-
-function updateCurrentTask(task, playerInventory) {
-  // TODO: Create wide variety of tasks, not just one
-  task.description = "Collect until time expires"
-
-  task.goal.type = randomCropType()
-  task.goal.amount = randomIntFromRange(25, 50)
-
-  task.startingPointAmount = playerInventory[task.goal.type]
+  Object.setPrototypeOf(gameStateObject.task, Task.prototype)
 }
 
 function createGrid(width, height) {
@@ -207,16 +257,7 @@ let state = reactive({
     height: START_WORLD_HEIGHT,
     grid: createGrid(START_WORLD_WIDTH, START_WORLD_HEIGHT),
   },
-  task: {
-    tickable: new Tickable(msToTicks(60_000)),
-    isAvailable: false,
-    description: "No task is currently available",
-    goal: {
-      type: null, // CropType
-      amount: 0,
-    },
-    startingPointAmount: 0,
-  },
+  task: new Task(),
 })
 
 function tickState(gameState) {
@@ -227,25 +268,8 @@ function tickState(gameState) {
     }
   }
 
-  let task = gameState.task
-
-  if (task.tickable.tick()) {
-    const playerInventory = gameState.player.inventory
-    const isGoalAchieved = playerInventory[task.goal.type] >= task.goal.amount
-
-    if (!task.isAvailable) {
-      task.isAvailable = true
-    } else if (isGoalAchieved) {
-      let playerSeeds = gameState.player.seeds
-
-      const reward = {
-        type: randomCropType(),
-        amount: randomIntFromRange(1, 3),
-      }
-      playerSeeds[reward.type] = reward.amount
-    }
-    updateCurrentTask(task, playerInventory)
-  }
+  const player = gameState.player
+  gameState.task.tick(player.inventory, player.seeds)
 }
 
 function deepMergeState(newState) {

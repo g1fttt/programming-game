@@ -91,12 +91,17 @@ function genHarvest(gameState) {
 
     ++gameState.player.inventory[cropType]
 
+    let playerSeeds = gameState.player.seeds
+
     // 10% chance to not obtain any seeds from crop
-    if (randomIntFromRange(1, 100) <= 10) {
+    if (
+      randomIntFromRange(1, 100) <= 10 &&
+      playerSeeds[cropType] > 1 /* prevent instant game restart */
+    ) {
       return
     }
 
-    gameState.player.seeds[cropType] += randomIntFromRange(1, 3)
+    playerSeeds[cropType] += randomIntFromRange(1, 3)
   }
 }
 

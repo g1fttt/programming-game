@@ -17,7 +17,7 @@ const playerInventory = store.state.player.inventory
         </p>
       </div>
     </div>
-    <p>({{ task.tickable.timeLeftInSeconds() }}s)</p>
+    <p>({{ task.timeLeftInSeconds() }}s)</p>
   </div>
 </template>
 

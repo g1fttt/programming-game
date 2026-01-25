@@ -116,6 +116,21 @@ function onStopButtonClick() {
 #editor-container {
   padding: 1rem;
 
+  & > #button-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-bottom: 1rem;
+
+    & > #run-button {
+      background-color: var(--sol-green);
+    }
+
+    & > #stop-button {
+      background-color: var(--sol-orange);
+    }
+  }
+
   & > #edit-area {
     overflow: auto;
     contain: inline-size;
@@ -128,21 +143,6 @@ function onStopButtonClick() {
     &:deep(.cm-editor) {
       height: 100%;
     }
-  }
-}
-
-#button-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 5px;
-  margin-bottom: 1rem;
-
-  & > #run-button {
-    background-color: var(--sol-green);
-  }
-
-  & > #stop-button {
-    background-color: var(--sol-orange);
   }
 }
 </style>

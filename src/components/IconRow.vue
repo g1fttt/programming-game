@@ -18,7 +18,7 @@ const props = defineProps({
   <div class="icon-row">
     <div v-for="(type, _) in CropType" :key="`${props.textureType}-icon-${type}`" class="icon">
       <img :src="iconTexture(type, props.textureType)" class="icon-texture" />
-      <p style="color: white">{{ props.source[type] }}</p>
+      <p>{{ props.source[type] }}</p>
     </div>
   </div>
 </template>
@@ -34,9 +34,10 @@ const props = defineProps({
     gap: 1px;
 
     & > p {
+      color: white;
       font-family: "Tiny5";
-      margin-bottom: 1.5rem;
-      margin-top: 0;
+      line-height: 0;
+      margin-top: 0.5rem;
     }
   }
 }

@@ -91,20 +91,20 @@ fieldset {
   border-style: solid;
   border-width: 3px;
 
-  & #button-row-separator {
+  & > #quiz-choices-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  & > #button-row-separator {
     border-style: dashed;
     border-width: 2px;
   }
-}
 
-#quiz-choices-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-#button-row {
-  display: flex;
-  justify-content: space-between;
+  & > #button-row {
+    display: flex;
+    justify-content: space-between;
+  }
 }
 </style>

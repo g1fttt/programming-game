@@ -1,5 +1,5 @@
 <script setup>
-import Account from "@/components/Account.vue"
+import IconRow from "@/components/IconRow.vue"
 import Quiz from "@/components/Quiz.vue"
 import TaskNotification from "@/components/TaskNotification.vue"
 
@@ -34,7 +34,13 @@ onUnmounted(() => observer?.disconnect())
 
 <template>
   <div id="ui-container">
-    <Account />
+    <IconRow :source="store.state.player.inventory" texture-type="inventory" class="icon-row" />
+    <IconRow
+      :source="store.state.player.seeds"
+      texture-type="pouch"
+      class="icon-row"
+      id="seeds-icon-row"
+    />
 
     <TaskNotification />
 
@@ -54,34 +60,43 @@ onUnmounted(() => observer?.disconnect())
 #ui-container {
   --dialog-border-radius: 8px;
   --dialog-border-color: #00252f;
-}
 
-#quiz-dialog {
-  background-color: var(--sol-base02);
-  border-radius: var(--dialog-border-radius);
-  border-color: var(--dialog-border-color);
-
-  &::backdrop {
-    backdrop-filter: blur(8px);
-    background-color: rgba(0, 0, 0, 0.25);
-  }
-}
-
-#button-column {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  margin: 1rem;
-  gap: 1rem;
-
-  & > .game-button {
-    background-color: var(--sol-yellow);
+  & > .icon-row {
+    position: absolute;
+    margin: 1rem;
   }
 
-  & > .misc-button {
-    background-color: var(--sol-blue);
+  & > #seeds-icon-row {
+    bottom: 0;
+  }
+
+  & > #button-column {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 1rem;
+    gap: 1rem;
+
+    & > .game-button {
+      background-color: var(--sol-yellow);
+    }
+
+    & > .misc-button {
+      background-color: var(--sol-blue);
+    }
+  }
+
+  & > #quiz-dialog {
+    background-color: var(--sol-base02);
+    border-radius: var(--dialog-border-radius);
+    border-color: var(--dialog-border-color);
+
+    &::backdrop {
+      backdrop-filter: blur(8px);
+      background-color: rgba(0, 0, 0, 0.25);
+    }
   }
 }
 </style>
