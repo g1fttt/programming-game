@@ -24,8 +24,8 @@ sow every plant in the most effective way: using patterns and soil watering.
 | ---- | ------ | ---------- |
 | Crop growth system | ✅ | |
 | Seeds and economy system | ✅ | May require some balancing in order to make it more fun |
-| Soil watering mechanics | ❌| |
-| Player cooldown and action heaviness | ❌| May require rewrite of the game state ticking mechanism |
+| Soil watering mechanics | ✅ | |
+| Player cooldown and action heaviness | ❌| May require rewriting of the game state ticking mechanism |
 | Pattern-dependant crop growth speed | ❌| |
 | World grid upgrade for resources | ❌| Technically already implemented, but without taking resources into account |
 

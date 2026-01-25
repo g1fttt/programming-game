@@ -38,7 +38,7 @@ export default [
   {
     label: "How much time does it take for each growth stage?",
     answers: [
-      { label: "~3 seconds", correct: true },
+      { label: "Crop-dependant", correct: true },
       { label: "~5 seconds" },
       { label: "~2500 milliseconds" },
       { label: "Don't know, haven't played" },
