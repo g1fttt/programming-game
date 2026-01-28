@@ -13,9 +13,11 @@ const playerInventory = ref(gameState.player.inventory)
     <p id="description">{{ task.description }}</p>
     <div v-if="task.isAvailable">
       <div id="icon">
-        <img :src="iconTexture(task.goal.type, 'inventory')" class="icon-texture" />
+        <img :src="iconTexture(task.goal.cropType, 'inventory')" class="icon-texture" />
         <p id="goal-amount">
-          {{ playerInventory[task.goal.type] - task.startingPointAmount }}/{{ task.goal.amount }}
+          {{ playerInventory[task.goal.cropType] - task.startingPointAmount }}/{{
+            task.goal.amount
+          }}
         </p>
       </div>
     </div>
