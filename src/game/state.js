@@ -1,17 +1,23 @@
 import { msToTicks, clamp, randomIntFromRange, ticksToMs } from "@/game/utils.js"
 
-import { reactive, readonly } from "vue"
+import { reactive } from "vue"
 
-const RADISH_GROWTH_TIME = 4500
-const LETTUCE_GROWTH_TIME = 7000
-const TURNIP_GROWTH_TIME = 9000
-const POTATO_GROWTH_TIME = 12_000
-const CARROT_GROWTH_TIME = 12_000
-const ONION_GROWTH_TIME = 12_000
+const RADISH_GROWTH_TIME = 4500,
+  LETTUCE_GROWTH_TIME = 7000,
+  TURNIP_GROWTH_TIME = 9000,
+  POTATO_GROWTH_TIME = 12_000,
+  CARROT_GROWTH_TIME = 12_000,
+  ONION_GROWTH_TIME = 12_000
 
 const WATER_RETENTION_TIME = 15_000
 
 const TASK_HOLD_TIME = 60_000
+
+const START_WORLD_WIDTH = 3,
+  START_WORLD_HEIGHT = 3
+
+const MAX_WORLD_WIDTH = 10,
+  MAX_WORLD_HEIGHT = 10
 
 export const CropType = Object.freeze({
   RADISH: "radish",
@@ -20,6 +26,12 @@ export const CropType = Object.freeze({
   POTATO: "potato",
   CARROT: "carrot",
   ONION: "onion",
+})
+
+export const GrowthStage = Object.freeze({
+  SPROUTING: 1,
+  SEEDLING: 2,
+  RIPENING: 3,
 })
 
 function cropTypeToGrowthTimeMs(cropType) {
@@ -51,18 +63,6 @@ function randomCropType() {
 
   return cropTypes[randomTypeIndex]
 }
-
-function emptyCropTypeStorage() {
-  const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
-
-  return Object.fromEntries(entries)
-}
-
-export const GrowthStage = Object.freeze({
-  SPROUTING: 1,
-  SEEDLING: 2,
-  RIPENING: 3,
-})
 
 export const MS_PER_TICK = 10
 
@@ -133,7 +133,7 @@ class WorldGridCell extends Tickable {
   }
 
   static fromObject(object) {
-    let cell = structuredClone(object)
+    const cell = structuredClone(object)
 
     Object.setPrototypeOf(cell, WorldGridCell.prototype)
     Object.setPrototypeOf(cell.water, Tickable.prototype)
@@ -177,149 +177,185 @@ class Task extends Tickable {
 
     this.isAvailable = false
     this.description = "No task is currently available"
-    this.goal = { type: null /* Croptype */, amount: 0 }
+    this.goal = { cropType: null, amount: 0 }
     this.startingPointAmount = 0
   }
 
   tick(playerInventory, playerSeeds) {
-    const isDoneTicking = super.tick()
-
-    if (isDoneTicking) {
-      const isGoalAchieved = playerInventory[this.goal.type] >= this.goal.amount
-
-      if (!this.isAvailable) {
-        this.isAvailable = true
-      } else if (isGoalAchieved) {
-        const reward = {
-          type: randomCropType(),
-          amount: randomIntFromRange(1, 3),
-        }
-        playerSeeds[reward.type] = reward.amount
-      }
-      this.update(playerInventory)
+    if (!super.tick()) {
+      return false
     }
-    return isDoneTicking
+
+    const isGoalAchieved = playerInventory[this.goal.cropType] >= this.goal.amount
+
+    if (!this.isAvailable) {
+      this.isAvailable = true
+    } else if (isGoalAchieved) {
+      const reward = {
+        cropType: randomCropType(),
+        amount: randomIntFromRange(1, 3),
+      }
+      playerSeeds[reward.cropType] = reward.amount
+    }
+
+    this.update(playerInventory)
+
+    return true
   }
 
   update(playerInventory) {
     // TODO: Create wide variety of tasks, not just one
     this.description = "Collect until time expires"
 
-    this.goal.type = randomCropType()
+    this.goal.cropType = randomCropType()
     this.goal.amount = randomIntFromRange(25, 50)
 
-    this.startingPointAmount = playerInventory[this.goal.type]
+    this.startingPointAmount = playerInventory[this.goal.cropType]
   }
 }
 
-// Reconstructs game state object after transition between main thread and worker because
-// postMessage sends only fields of the game state object, but not methods.
-export function reconstructState(gameStateObject) {
-  let grid = gameStateObject.world.grid
+class Player {
+  constructor() {
+    function emptyCropTypeStorage() {
+      const entries = Object.entries(CropType).map(([_, value]) => [value, 0])
 
-  for (let y = 0; y < gameStateObject.world.height; ++y) {
-    for (let x = 0; x < gameStateObject.world.width; ++x) {
-      grid[y][x] = WorldGridCell.fromObject(grid[y][x])
+      return Object.fromEntries(entries)
     }
-  }
 
-  Object.setPrototypeOf(gameStateObject.task, Task.prototype)
+    this.pos = { x: 0, y: 0 }
+    this.inventory = emptyCropTypeStorage()
+    this.seeds = { ...emptyCropTypeStorage(), radish: 1 }
+  }
 }
 
-function createGrid(width, height) {
-  let grid = []
-
-  for (let y = 0; y < width; ++y) {
-    let row = []
-
-    for (let x = 0; x < height; ++x) {
-      row.push(new WorldGridCell())
-    }
-    grid.push(row)
-  }
-  return grid
-}
-
-const START_WORLD_WIDTH = 3
-const START_WORLD_HEIGHT = 3
-
-const MAX_WORLD_WIDTH = 10
-const MAX_WORLD_HEIGHT = 10
-
-let state = reactive({
-  player: {
-    pos: { x: 0, y: 0 },
-    inventory: emptyCropTypeStorage(),
-    seeds: { ...emptyCropTypeStorage(), radish: 1 },
-  },
-  world: {
-    width: START_WORLD_WIDTH,
-    height: START_WORLD_HEIGHT,
-    grid: createGrid(START_WORLD_WIDTH, START_WORLD_HEIGHT),
-  },
-  task: new Task(),
-})
-
-function tickState(gameState) {
-  for (let y = 0; y < gameState.world.height; ++y) {
-    for (let x = 0; x < gameState.world.width; ++x) {
-      let cell = gameState.world.grid[y][x]
-      cell.tick()
-    }
+class World {
+  constructor(width, height) {
+    this.width = width
+    this.height = height
+    this.createGrid(width, height)
   }
 
-  const player = gameState.player
-  gameState.task.tick(player.inventory, player.seeds)
-}
+  static fromObject(object) {
+    const world = structuredClone(object)
 
-function deepMergeState(newState) {
-  const merge = (target, source) => {
-    for (const key in source) {
-      if (source[key] instanceof Object && key in target) {
-        merge(target[key], source[key])
-      } else {
-        target[key] = source[key]
+    for (let y = 0; y < world.height; ++y) {
+      for (let x = 0; x < world.width; ++x) {
+        world.grid[y][x] = WorldGridCell.fromObject(world.grid[y][x])
       }
     }
+
+    Object.setPrototypeOf(world, World.prototype)
+
+    return world
   }
-  merge(state, newState)
+
+  createGrid(width, height) {
+    const grid = []
+
+    for (let y = 0; y < height; ++y) {
+      const row = []
+
+      for (let x = 0; x < width; ++x) {
+        row.push(new WorldGridCell())
+      }
+      grid.push(row)
+    }
+    this.grid = grid
+  }
+
+  enlargeGrid() {
+    const newWorldWidth = clamp(this.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
+    const newWorldHeight = clamp(this.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
+
+    if (newWorldWidth === this.world.width && newWorldHeight === this.world.height) {
+      return false
+    }
+
+    this.world.width = newWorldWidth
+    this.world.height = newWorldHeight
+
+    const newGrid = this.world.grid
+    const newRow = []
+
+    for (let x = 0; x < this.world.width; ++x) {
+      newRow.push(new WorldGridCell())
+    }
+
+    newGrid.splice(0, 0, newRow)
+
+    for (let y = 0; y < this.world.height; ++y) {
+      newGrid[y].push(new WorldGridCell())
+    }
+
+    this.world.grid = newGrid
+
+    return true
+  }
+
+  canUpgradeGrid() {
+    return false
+  }
 }
 
-function enlargeWorldGrid() {
-  const newWorldWidth = clamp(state.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
-  const newWorldHeight = clamp(state.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
-
-  if (newWorldWidth === state.world.width && newWorldHeight === state.world.height) {
-    return
+export class GameState {
+  constructor() {
+    this.player = new Player()
+    this.world = new World(START_WORLD_WIDTH, START_WORLD_HEIGHT)
+    this.task = new Task()
   }
 
-  state.world.width = newWorldWidth
-  state.world.height = newWorldHeight
+  // Reconstructs game state object after transition between main thread and worker because
+  // postMessage sends only fields of the game state object, but not methods.
+  static fromObject(object) {
+    const gameState = structuredClone(object)
 
-  let newGrid = state.world.grid
-  let newRow = []
+    Object.setPrototypeOf(gameState.player, Player.prototype)
 
-  for (let x = 0; x < state.world.width; ++x) {
-    newRow.push(new WorldGridCell())
+    gameState.world = World.fromObject(gameState.world)
+
+    Object.setPrototypeOf(gameState.task, Task.prototype)
+    Object.setPrototypeOf(gameState, GameState.prototype)
+
+    return gameState
   }
 
-  newGrid.splice(0, 0, newRow)
+  tick() {
+    for (let y = 0; y < this.world.height; ++y) {
+      for (let x = 0; x < this.world.width; ++x) {
+        const cell = this.world.grid[y][x]
+        cell.tick()
+      }
+    }
 
-  for (let y = 0; y < state.world.height; ++y) {
-    newGrid[y].push(new WorldGridCell())
+    const player = this.player
+    this.task.tick(player.inventory, player.seeds)
   }
 
-  // Don't let the player to go up along with the new grid
-  ++state.player.pos.y
+  deepMerge(newState) {
+    const merge = (target, source) => {
+      for (const key in source) {
+        if (source[key] instanceof Object && key in target) {
+          merge(target[key], source[key])
+        } else {
+          target[key] = source[key]
+        }
+      }
+    }
+    merge(this, newState)
+  }
 
-  state.world.grid = newGrid
+  enlargeWorldGrid() {
+    if (!this.world.enlargeGrid()) {
+      return
+    }
+
+    // Don't let the player to go up along with the new grid
+    ++this.player.pos.y
+  }
+
+  canUpgradeWorldGrid() {
+    return this.world.canUpgradeGrid()
+  }
 }
 
-export const store = {
-  state: readonly(state),
-  tickState: tickState,
-  deepMergeState: deepMergeState,
-  enlargeWorldGrid: enlargeWorldGrid,
-  // TODO:
-  canUpgradeWorldGrid: () => false,
-}
+export const gameState = reactive(new GameState())

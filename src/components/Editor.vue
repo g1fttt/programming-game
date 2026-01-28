@@ -10,7 +10,7 @@ import { solarizedDark } from "@fsegurai/codemirror-theme-solarized-dark"
 
 import * as esLintBrowserify from "eslint-linter-browserify"
 
-import { reconstructState, store } from "@/game/state.js"
+import { GameState, gameState } from "@/game/state.js"
 import { codeStatus, messageType } from "@/game/worker.js"
 import CodeWorker from "@/game/worker.js?worker"
 
@@ -29,10 +29,8 @@ codeWorker.onmessage = (ev) => {
       codeIsRunning.value = ev.data.status === codeStatus.RUNNING
       break
     default:
-      let gameState = ev.data
-
-      reconstructState(gameState)
-      store.deepMergeState(gameState)
+      const prototypedGameState = GameState.fromObject(ev.data)
+      gameState.deepMerge(prototypedGameState)
 
       break
   }
@@ -84,12 +82,12 @@ function onRunButtonClick() {
     return
   }
 
-  const rawState = toRaw(store.state)
+  const rawGameState = toRaw(gameState)
 
   codeWorker.postMessage({
     type: messageType.CODE_START,
     code: editorView.state.doc.toString(),
-    gameState: rawState,
+    gameState: rawGameState,
   })
 }
 

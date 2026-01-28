@@ -1,9 +1,11 @@
 <script setup>
-import { store } from "@/game/state.js"
+import { gameState } from "@/game/state.js"
 import { iconTexture } from "@/game/utils"
 
-const task = store.state.task
-const playerInventory = store.state.player.inventory
+import { ref } from "vue"
+
+const task = ref(gameState.task)
+const playerInventory = ref(gameState.player.inventory)
 </script>
 
 <template>

@@ -1,8 +1,8 @@
-import { store } from "@/game/state.js"
+import { gameState } from "@/game/state.js"
 
 export function worldGridRenderInfo() {
-  const world = store.state.world
-  const player = store.state.player
+  const world = gameState.world
+  const player = gameState.player
 
   let grid = []
 

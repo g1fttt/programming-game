@@ -2,7 +2,7 @@ import Interpreter from "js-interpreter"
 import * as Babel from "@babel/standalone"
 
 import { genApi } from "@/game/api.js"
-import { store, MS_PER_TICK, reconstructState } from "@/game/state.js"
+import { MS_PER_TICK, GameState } from "@/game/state.js"
 
 function initProperties(interpreter, globalObject, api) {
   const createCommand = (fn) => {
@@ -51,7 +51,7 @@ async function runCode(interpreter, gameState) {
     accumulator += deltaTime
 
     while (accumulator >= MS_PER_TICK) {
-      store.tickState(gameState)
+      gameState.tick()
 
       try {
         if (interpreter.step()) {
@@ -122,8 +122,8 @@ self.onmessage = function (ev) {
     case messageType.CODE_START:
       status = codeStatus.RUNNING
 
-      reconstructState(gameState)
-      onCodeStart(code, gameState)
+      const prototypedGameState = GameState.fromObject(gameState)
+      onCodeStart(code, prototypedGameState)
 
       break
     case messageType.CODE_STOP:

@@ -1,5 +1,5 @@
 <script setup>
-import { store } from "@/game/state.js"
+import { gameState } from "@/game/state.js"
 import { publicAsset } from "@/game/utils.js"
 import { worldGridRenderInfo } from "@/game/world.js"
 
@@ -29,7 +29,7 @@ function cellTextures(cell) {
 </script>
 
 <template>
-  <div id="world-grid" :style="{ gridTemplateColumns: `repeat(${store.state.world.width}, 50px)` }">
+  <div id="world-grid" :style="{ gridTemplateColumns: `repeat(${gameState.world.width}, 50px)` }">
     <div
       v-for="cell in worldGrid"
       :key="cell.id"

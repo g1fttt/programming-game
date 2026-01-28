@@ -3,7 +3,7 @@ import IconRow from "@/components/IconRow.vue"
 import Quiz from "@/components/Quiz.vue"
 import TaskNotification from "@/components/TaskNotification.vue"
 
-import { store } from "@/game/state.js"
+import { gameState } from "@/game/state.js"
 
 import { ref, onMounted, onUnmounted } from "vue"
 
@@ -34,9 +34,9 @@ onUnmounted(() => observer?.disconnect())
 
 <template>
   <div id="ui-container">
-    <IconRow :source="store.state.player.inventory" texture-type="inventory" class="icon-row" />
+    <IconRow :source="gameState.player.inventory" texture-type="inventory" class="icon-row" />
     <IconRow
-      :source="store.state.player.seeds"
+      :source="gameState.player.seeds"
       texture-type="pouch"
       class="icon-row"
       id="seeds-icon-row"
@@ -45,7 +45,13 @@ onUnmounted(() => observer?.disconnect())
     <TaskNotification />
 
     <div id="button-column">
-      <button @click="store.enlargeWorldGrid()" class="button game-button">Upgrade</button>
+      <button
+        v-if="gameState.canUpgradeWorldGrid()"
+        @click="gameState.enlargeWorldGrid()"
+        class="button game-button"
+      >
+        Upgrade
+      </button>
       <button @click="openQuizDialog()" class="button misc-button">Quiz</button>
     </div>
 
