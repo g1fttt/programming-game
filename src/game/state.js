@@ -264,35 +264,35 @@ class World {
   }
 
   enlargeGrid() {
-    const newWorldWidth = clamp(this.world.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
-    const newWorldHeight = clamp(this.world.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
+    const newWidth = clamp(this.width + 1, START_WORLD_WIDTH, MAX_WORLD_WIDTH)
+    const newHeight = clamp(this.height + 1, START_WORLD_HEIGHT, MAX_WORLD_HEIGHT)
 
-    if (newWorldWidth === this.world.width && newWorldHeight === this.world.height) {
+    if (newWidth === this.width && newHeight === this.height) {
       return false
     }
 
-    this.world.width = newWorldWidth
-    this.world.height = newWorldHeight
+    this.width = newWidth
+    this.height = newHeight
 
-    const newGrid = this.world.grid
+    const newGrid = this.grid
     const newRow = []
 
-    for (let x = 0; x < this.world.width; ++x) {
+    for (let x = 0; x < this.width; ++x) {
       newRow.push(new WorldGridCell())
     }
 
     newGrid.splice(0, 0, newRow)
 
-    for (let y = 0; y < this.world.height; ++y) {
+    for (let y = 0; y < this.height; ++y) {
       newGrid[y].push(new WorldGridCell())
     }
 
-    this.world.grid = newGrid
+    this.grid = newGrid
 
     return true
   }
 
-  canUpgradeGrid() {
+  canUpgradeGrid(playerInventory) {
     return false
   }
 }
@@ -354,7 +354,7 @@ export class GameState {
   }
 
   canUpgradeWorldGrid() {
-    return this.world.canUpgradeGrid()
+    return this.world.canUpgradeGrid(this.player.inventory)
   }
 }
 
