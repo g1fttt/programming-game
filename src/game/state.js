@@ -19,6 +19,8 @@ const START_WORLD_WIDTH = 3,
 const MAX_WORLD_WIDTH = 10,
   MAX_WORLD_HEIGHT = 10
 
+const REQUIRED_GOAL_FOR_UPGRADE = 20
+
 export const CropType = Object.freeze({
   RADISH: "radish",
   LETTUCE: "lettuce",
@@ -233,6 +235,7 @@ class World {
     this.width = width
     this.height = height
     this.createGrid(width, height)
+    this.requiredCropTypeForUpgrade = CropType.RADISH
   }
 
   static fromObject(object) {
@@ -293,7 +296,9 @@ class World {
   }
 
   canUpgradeGrid(playerInventory) {
-    return false
+    const has = playerInventory[this.requiredCropTypeForUpgrade]
+
+    return has >= REQUIRED_GOAL_FOR_UPGRADE
   }
 }
 
@@ -348,6 +353,8 @@ export class GameState {
     if (!this.world.enlargeGrid()) {
       return
     }
+
+    this.player.inventory[this.world.requiredCropTypeForUpgrade] -= REQUIRED_GOAL_FOR_UPGRADE
 
     // Don't let the player to go up along with the new grid
     ++this.player.pos.y

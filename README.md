@@ -27,13 +27,14 @@ sow every plant in the most effective way: using patterns and soil watering.
 | Soil watering mechanics | ✅ | |
 | Player cooldown and action heaviness | ❌| May require rewriting of the game state ticking mechanism |
 | Pattern-dependant crop growth speed | ❌| |
-| World grid upgrade for resources | ❌| Technically already implemented, but without taking resources into account |
+| World grid upgrade for resources | ✅ | Very primitive, yet working |
 
 ## Technical Features
 
-| Name | Status |
-| ---- | ------ |
-| Code editor with memory among sessions | ✅ |
-| Autocompletion for game api | ✅ |
-| Non-blocking code executor | ✅ |
-| Audio engine | ❌ |
+| Name | Status | Commentary |
+| ---- | ------ | ---------- |
+| Code editor with memory among sessions | ✅ | |
+| Autocompletion for game api | ✅ | |
+| Non-blocking code executor | ✅ | |
+| QuickJS as a backend | ❌| Shall drastically improve game performance |
+| Audio engine | ❌ | |
